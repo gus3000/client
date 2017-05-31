@@ -98,8 +98,18 @@ function HypothesisAppController(
       return;
     }
 
-    self.accountDialog.visible = true;
-    scrollToView('login-form');
+    if (auth.login) {
+      // OAuth-based login.
+      auth.login().then(function () {
+        session.reload();
+      }).catch(function (err) {
+        console.error(err.message);
+      });
+    } else {
+      // Legacy cookie-based login.
+      self.accountDialog.visible = true;
+      scrollToView('login-form');
+    }
   };
 
   this.signUp = function(){

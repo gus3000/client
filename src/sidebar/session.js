@@ -91,9 +91,13 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
       // the /app endpoint.
       lastLoadTime = Date.now();
       lastLoad = retryUtil.retryPromiseOperation(function () {
-        var authority = getAuthority();
-        if (authority) {
-          return store.profile.read({authority: authority}).then(update);
+        if (auth.login) {
+          var opts = {};
+          var authority = getAuthority();
+          if (authority) {
+            opts.authority = authority;
+          }
+          return store.profile.read(opts).then(update);
         } else {
           return resource._load().$promise;
         }
@@ -217,12 +221,23 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
     });
   }
 
+  /**
+   * Clear the cached profile information and re-fetch it from the server.
+   *
+   * This can be used to refresh the user's profile state after logging in.
+   */
+  function reload() {
+    lastLoad = null;
+    lastLoadTime = null;
+    return resource.load();
+  }
 
   return {
     dismissSidebarTutorial: dismissSidebarTutorial,
     load: resource.load,
     login: resource.login,
     logout: logout,
+    reload: reload,
 
     // For the moment, we continue to expose the session state as a property on
     // this service. In future, other services which access the session state

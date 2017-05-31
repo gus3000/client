@@ -1,12 +1,26 @@
 'use strict';
 
+/* global Uint8Array */
+
 var queryString = require('query-string');
 
 var resolve = require('./util/url-util').resolve;
 var serviceConfig = require('./service-config');
 
 /**
- * OAuth-based authentication service used for publisher accounts.
+ * Generate a random hex string of `len` chars.
+ *
+ * @param {number} - An even-numbered length string to generate.
+ * @return {string}
+ */
+function randomHexString(len) {
+  var bytes = new Uint8Array(len / 2);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(byte => byte.toString(16)).join('');
+}
+
+/**
+ * OAuth-based authorization service.
  *
  * A grant token embedded on the page by the publisher is exchanged for
  * an opaque access token.
@@ -14,6 +28,7 @@ var serviceConfig = require('./service-config');
 // @ngInject
 function auth($http, flash, settings) {
 
+  var grantTokenFromAuthWindow;
   var accessTokenPromise;
   var tokenUrl = resolve('token', settings.apiUrl);
 
@@ -128,7 +143,7 @@ function auth($http, flash, settings) {
 
   function tokenGetter() {
     if (!accessTokenPromise) {
-      var grantToken = (serviceConfig(settings) || {}).grantToken;
+      var grantToken = (serviceConfig(settings) || {}).grantToken || grantTokenFromAuthWindow;
 
       if (grantToken) {
         accessTokenPromise = exchangeToken(grantToken).then(function (tokenInfo) {
@@ -154,8 +169,71 @@ function auth($http, flash, settings) {
   function clearCache() {
   }
 
+  /**
+   * Login to the annotation service using OAuth.
+   */
+  function login() {
+    // Random state string used to check that auth messages came from the popup
+    // window that we opened.
+    var state = randomHexString(16);
+
+    // Promise which resolves or rejects when the user accepts or closes the
+    // auth popup.
+    var authResponse = new Promise(function (resolve, reject) {
+      function authRespListener(event) {
+        if (typeof event.data !== 'object') {
+          return;
+        }
+
+        if (event.data.state !== state) {
+          // This message came from a different popup window.
+          return;
+        }
+
+        if (event.data.type === 'authorization_response') {
+          resolve(event.data);
+        }
+        if (event.data.type === 'authorization_canceled') {
+          reject(new Error('Authorization window was closed'));
+        }
+        window.removeEventListener('message', authRespListener);
+      }
+      window.addEventListener('message', authRespListener);
+    });
+
+    // Authorize user and retrieve grant token
+    var width  = 400;
+    var height = 400;
+    var left   = window.screenX + ((window.innerWidth / 2)  - (width  / 2));
+    var top    = window.screenY + ((window.innerHeight / 2) - (height / 2));
+
+    var authUrl = settings.authUrl;
+    authUrl += '?' + queryString.stringify({
+      client_id: settings.oauthClientId,
+      origin: location.origin,
+      response_mode: 'web_message',
+      response_type: 'code',
+      state: state,
+    });
+    var authWindowSettings = queryString.stringify({
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+    }).replace(/&/g, ',');
+    window.open(authUrl, 'Login to Hypothesis', authWindowSettings);
+
+    return authResponse.then(function (resp) {
+      // Save the grant token. It will be exchanged for an access token when the
+      // next API request is made.
+      grantTokenFromAuthWindow = resp.code;
+      accessTokenPromise = null;
+    });
+  }
+
   return {
     clearCache: clearCache,
+    login: login,
     tokenGetter: tokenGetter,
   };
 }
