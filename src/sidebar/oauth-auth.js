@@ -8,6 +8,19 @@ var resolve = require('./util/url-util').resolve;
 var serviceConfig = require('./service-config');
 
 /**
+ * An object holding the details of an access token from the tokenUrl endpoint.
+ * @typedef {Object} TokenInfo
+ * @property {string} accessToken  - The access token itself.
+ * @property {number} expiresIn    - The lifetime of the access token,
+ *                                   in seconds.
+ * @property {Date} refreshAfter   - A time before the access token's expiry
+ *                                   time, after which the code should
+ *                                   attempt to refresh the access token.
+ * @property {string} refreshToken - The refresh token that can be used to
+ *                                   get a new access token.
+ */
+
+/**
  * Generate a random hex string of `len` chars.
  *
  * @param {number} - An even-numbered length string to generate.
@@ -16,20 +29,39 @@ var serviceConfig = require('./service-config');
 function randomHexString(len) {
   var bytes = new Uint8Array(len / 2);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(byte => byte.toString(16)).join('');
+  return Array.from(bytes).map(function (byte) {
+    return byte.toString(16);
+  }).join('');
+}
+
+function getAuthority(settings) {
+  var cfg = serviceConfig(settings);
+  return cfg ? cfg.authority : 'default';
 }
 
 /**
  * OAuth-based authorization service.
  *
- * A grant token embedded on the page by the publisher is exchanged for
- * an opaque access token.
+ * This service handles:
+ *
+ *  - Exchanging grant tokens provided either by the publisher or the service's
+ *    authorization endpoint for access token.
+ *  - Launching the OAuth authorization flow when `login()` is called.
+ *  - Persisting credentials for use in future sessions.
  */
 // @ngInject
-function auth($http, flash, settings) {
+function auth($http, flash, localStorage, settings) {
 
+  /**
+   * Grant token returned by the OAuth authorization endpoint after the
+   * last call to `login()`.
+   */
   var grantTokenFromAuthWindow;
   var accessTokenPromise;
+
+  /**
+   * Endpoint which can exchange grant tokens for access tokens.
+   */
   var tokenUrl = resolve('token', settings.apiUrl);
 
   /**
@@ -47,18 +79,49 @@ function auth($http, flash, settings) {
     );
   }
 
+  function grantTokenProvidedByHostPage() {
+    var cfg = serviceConfig(settings);
+    return cfg ? cfg.grantToken : null;
+  }
+
   /**
-   * An object holding the details of an access token from the tokenUrl endpoint.
-   * @typedef {Object} TokenInfo
-   * @property {string} accessToken  - The access token itself.
-   * @property {number} expiresIn    - The lifetime of the access token,
-   *                                   in seconds.
-   * @property {Date} refreshAfter   - A time before the access token's expiry
-   *                                   time, after which the code should
-   *                                   attempt to refresh the access token.
-   * @property {string} refreshToken - The refresh token that can be used to
-   *                                   get a new access token.
+   * Return the localStorage key used for token data.
    */
+  function storageKey(authority) {
+    return 'hypothesis:oauth:' + authority + ':token';
+  }
+
+  /**
+   * Read the last-used access and refresh tokens for a given authority from
+   * storage.
+   *
+   * @param {string} authority
+   * @return {TokenInfo}
+   */
+  function readLastUsedToken(authority) {
+    try {
+      return JSON.parse(localStorage.getItem(storageKey(authority)));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Persist the last-used access and refresh tokens for a given authority to
+   * storage.
+   *
+   * @param {string} authority
+   * @param {TokenInfo} token
+   */
+  function saveLastUsedToken(authority, token) {
+    try {
+      var json = JSON.stringify(token);
+      localStorage.setItem(storageKey(authority), json);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
   /**
    * Return a new TokenInfo object from the given tokenUrl endpoint response.
@@ -112,6 +175,7 @@ function auth($http, flash, settings) {
     var data = {grant_type: 'refresh_token', refresh_token: refreshToken};
     postToTokenUrl(data).then(function (response) {
       var tokenInfo = tokenInfoFrom(response);
+      saveLastUsedToken(getAuthority(), tokenInfo);
       refreshAccessTokenBeforeItExpires(tokenInfo);
       accessTokenPromise = Promise.resolve(tokenInfo.accessToken);
     }).catch(function() {
@@ -143,7 +207,7 @@ function auth($http, flash, settings) {
 
   function tokenGetter() {
     if (!accessTokenPromise) {
-      var grantToken = (serviceConfig(settings) || {}).grantToken || grantTokenFromAuthWindow;
+      var grantToken = grantTokenProvidedByHostPage() || grantTokenFromAuthWindow;
 
       if (grantToken) {
         accessTokenPromise = exchangeToken(grantToken).then(function (tokenInfo) {
@@ -230,6 +294,26 @@ function auth($http, flash, settings) {
       accessTokenPromise = null;
     });
   }
+
+  /**
+   * Load credentials from the previous session, if available.
+   */
+  function init() {
+    if (grantTokenProvidedByHostPage()) {
+      // When the host page provides a grant token, we always use that instead
+      // of any cached credentials.
+      return;
+    }
+
+    var authority = getAuthority();
+    var lastToken = readLastUsedToken(authority);
+    if (lastToken) {
+      accessTokenPromise = Promise.resolve(lastToken.accessToken);
+      refreshAccessTokenBeforeItExpires(lastToken);
+    }
+  }
+
+  init();
 
   return {
     clearCache: clearCache,
