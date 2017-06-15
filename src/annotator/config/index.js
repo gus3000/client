@@ -11,7 +11,7 @@ function configFrom(window_) {
   var settings = settingsFrom(window_);
 
   var config = {
-    app: settings.app,
+    sidebarAppUrl: settings.sidebarAppUrl,
     query: settings.query,
     annotations: settings.annotations,
     openLoginForm: settings.hostPageSetting('openLoginForm', {allowInBrowserExt: true}),

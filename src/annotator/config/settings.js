@@ -23,7 +23,7 @@ function settingsFrom(window_) {
    *   no href.
    *
    */
-  function app() {
+  function sidebarAppUrl() {
     var link = window_.document.querySelector('link[type="application/annotator+html"]');
 
     if (!link) {
@@ -95,7 +95,7 @@ function settingsFrom(window_) {
   function hostPageSetting(name, options = {}) {
     var allowInBrowserExt = options.allowInBrowserExt || false;
 
-    if (!allowInBrowserExt && isBrowserExtension(app())) {
+    if (!allowInBrowserExt && isBrowserExtension(sidebarAppUrl())) {
       return null;
     }
 
@@ -107,7 +107,7 @@ function settingsFrom(window_) {
   }
 
   return {
-    get app() { return app(); },
+    get sidebarAppUrl() { return sidebarAppUrl(); },
     get annotations() { return annotations(); },
     get query() { return query(); },
     hostPageSetting: hostPageSetting,
