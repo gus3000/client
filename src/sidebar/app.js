@@ -110,7 +110,7 @@ function processAppOpts() {
 }
 
 var authService;
-if (serviceConfig(settings) || settings.oauthClientId) {
+if (serviceConfig(settings) || settings.oauth) {
   authService = require('./oauth-auth');
 } else {
   authService = require('./auth');

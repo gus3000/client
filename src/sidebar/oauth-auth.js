@@ -144,14 +144,18 @@ function auth($http, flash, localStorage, settings) {
     };
   }
 
-  // Post the given data to the tokenUrl endpoint as a form submission.
-  // Return a Promise for the access token response.
-  function postToTokenUrl(data) {
-    data = queryString.stringify(data);
+  /**
+   * Make a POST request to `url` with form URL encoded parameters.
+   *
+   * @param {string} url
+   * @param {Object} params - Parameter dictionary.
+   */
+  function postForm(url, params) {
+    params = queryString.stringify(params);
     var requestConfig = {
       headers: {'Content-Type': 'application/x-www-form-urlencoded'},
     };
-    return $http.post(tokenUrl, data, requestConfig);
+    return $http.post(url, params, requestConfig);
   }
 
   // Exchange the JWT grant token for an access token.
@@ -161,7 +165,7 @@ function auth($http, flash, localStorage, settings) {
       grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
       assertion: grantToken,
     };
-    return postToTokenUrl(data).then(function (response) {
+    return postForm(tokenUrl, data).then(function (response) {
       if (response.status !== 200) {
         throw new Error('Failed to retrieve access token');
       }
@@ -173,7 +177,7 @@ function auth($http, flash, localStorage, settings) {
   // See https://tools.ietf.org/html/rfc6749#section-6
   function refreshAccessToken(refreshToken) {
     var data = {grant_type: 'refresh_token', refresh_token: refreshToken};
-    postToTokenUrl(data).then(function (response) {
+    postForm(tokenUrl, data).then(function (response) {
       var tokenInfo = tokenInfoFrom(response);
       saveLastUsedToken(getAuthority(), tokenInfo);
       refreshAccessTokenBeforeItExpires(tokenInfo);
@@ -271,9 +275,9 @@ function auth($http, flash, localStorage, settings) {
     var left   = window.screenX + ((window.innerWidth / 2)  - (width  / 2));
     var top    = window.screenY + ((window.innerHeight / 2) - (height / 2));
 
-    var authUrl = settings.authUrl;
+    var authUrl = settings.oauth.authUrl;
     authUrl += '?' + queryString.stringify({
-      client_id: settings.oauthClientId,
+      client_id: settings.oauth.clientId,
       origin: location.origin,
       response_mode: 'web_message',
       response_type: 'code',
@@ -296,6 +300,15 @@ function auth($http, flash, localStorage, settings) {
   }
 
   /**
+   * Attempt to log-in automatically.
+   */
+  function autoLogin() {
+    return postForm(settings.oauth.tokenUrl, {
+      client_id: settings.oauth.clientId,
+    }).then(tokenInfoFrom);
+  }
+
+  /**
    * Load credentials from the previous session, if available.
    */
   function init() {
@@ -305,11 +318,22 @@ function auth($http, flash, localStorage, settings) {
       return;
     }
 
-    var authority = getAuthority();
+    var authority = getAuthority(settings);
     var lastToken = readLastUsedToken(authority);
     if (lastToken) {
+      // Re-use existing saved credentials.
       accessTokenPromise = Promise.resolve(lastToken.accessToken);
       refreshAccessTokenBeforeItExpires(lastToken);
+    } else {
+      // Attempt to login automatically.
+      accessTokenPromise = autoLogin().then((token) => {
+        saveLastUsedToken(authority, token);
+        refreshAccessTokenBeforeItExpires(token);
+        return token.accessToken;
+      }).catch(() => {
+        // Fall back to requiring manually triggered login.
+        return null;
+      });
     }
   }
 
