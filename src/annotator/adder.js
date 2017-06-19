@@ -5,9 +5,12 @@ var classnames = require('classnames');
 var template = require('./adder.html');
 
 var ANNOTATE_BTN_CLASS = 'js-annotate-btn';
-var ANNOTATE_BTN_SELECTOR = '.js-annotate-btn';
+var HIGHLIGHT_BTN_CLASS = 'js-highlight-btn';
+var OTHER_BTN_CLASS = 'js-other-btn';
 
+var ANNOTATE_BTN_SELECTOR = '.js-annotate-btn';
 var HIGHLIGHT_BTN_SELECTOR = '.js-highlight-btn';
+var OTHER_BTN_SELECTOR = '.js-other-btn';
 
 /**
  * Show the adder above the selection with an arrow pointing down at the
@@ -123,22 +126,26 @@ function Adder(container, options) {
 
   var view = element.ownerDocument.defaultView;
   var enterTimeout;
-
+  
   element.querySelector(ANNOTATE_BTN_SELECTOR)
     .addEventListener('click', handleCommand);
   element.querySelector(HIGHLIGHT_BTN_SELECTOR)
+    .addEventListener('click', handleCommand);
+  element.querySelector(OTHER_BTN_SELECTOR)
     .addEventListener('click', handleCommand);
 
   function handleCommand(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    var isAnnotateCommand = this.classList.contains(ANNOTATE_BTN_CLASS);
-
-    if (isAnnotateCommand) {
+    //var isAnnotateCommand = this.classList.contains(ANNOTATE_BTN_CLASS);
+    if (this.classList.contains(ANNOTATE_BTN_CLASS)) {
       options.onAnnotate();
-    } else {
+    } else if (this.classList.contains(HIGHLIGHT_BTN_CLASS)){
       options.onHighlight();
+    } else {
+      alert('other action 2');
+      console.log('LAPIN');
     }
 
     self.hide();
@@ -236,6 +243,7 @@ function Adder(container, options) {
     // See: https://github.com/hypothesis/client/issues/137
     this.element.querySelector(ANNOTATE_BTN_SELECTOR).style.display = '';
     this.element.querySelector(HIGHLIGHT_BTN_SELECTOR).style.display = '';
+    this.element.querySelector(OTHER_BTN_SELECTOR).style.display = '';
 
     Object.assign(container.style, {
       top: toPx(top),

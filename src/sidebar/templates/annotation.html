@@ -39,14 +39,25 @@
       overflow-hysteresis="20"
       content-data="vm.state().text">
       <markdown text="vm.state().text"
-                custom-text-class="{'annotation-body is-hidden':vm.isHiddenByModerator(),
-                                    'has-content':vm.hasContent()}"
+                custom-text-class="{'annotation-body is-hidden':vm.isHiddenByModerator(), 'has-content':vm.hasContent()}"
                 on-edit-text="vm.setText(text)"
                 read-only="!vm.editing()">
       </markdown>
     </excerpt>
   </section>
   <!-- / Body -->
+
+    <category-btn
+      class="category-btn"
+      ng-if="vm.editing()"
+      tags="vm.state().tags"
+      group="vm.group()"
+      can-post="vm.hasContent()"
+      is-shared="vm.isShared()"
+      on-cancel="vm.revert()"
+      on-save="vm.save()"
+      on-set-privacy="vm.setPrivacy(level)">
+    </category-btn>
 
   <!-- Tags -->
   <div class="annotation-body form-field" ng-if="vm.editing()">
@@ -62,7 +73,7 @@
       </li>
     </ul>
     <div class="u-stretch"></div>
-    <a class="annotation-link u-strong" ng-show="vm.canCollapseBody"
+    <a class="annotation-link u-strong"                           ng-show="vm.canCollapseBody"
       ng-click="vm.toggleCollapseBody($event)"
       ng-title="vm.collapseBody ? 'Show the full annotation text' : 'Show the first few lines only'"
       ng-bind="vm.collapseBody ? 'More' : 'Less'"

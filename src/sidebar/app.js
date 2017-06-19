@@ -144,6 +144,7 @@ module.exports = angular.module('h', [
   .component('annotationThread', require('./components/annotation-thread'))
   .component('annotationViewerContent', require('./components/annotation-viewer-content'))
   .component('dropdownMenuBtn', require('./components/dropdown-menu-btn'))
+  .component('categoryBtn', require('./components/category-btn'))
   .component('excerpt', require('./components/excerpt'))
   .component('groupList', require('./components/group-list'))
   .component('helpLink', require('./components/help-link'))

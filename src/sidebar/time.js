@@ -28,7 +28,7 @@ function delta(date, now) {
 }
 
 function nSec(date, now) {
-  return '{} secs'.replace('{}', Math.floor(delta(date, now)));
+  return '{} secs'.replace('{}', Math.floor(delta(date, now))); //on arrondit deux fois pour être vraiment sûrs ?
 }
 
 function nMin(date, now) {
@@ -80,8 +80,7 @@ function format(date, options, Intl) {
     var formatter = formatters[key];
 
     if (!formatter) {
-      formatter = formatters[key] = new Intl.DateTimeFormat(undefined,
-                                                            options);
+      formatter = formatters[key] = new Intl.DateTimeFormat(undefined,options);
     }
 
     return formatter.format(date);
