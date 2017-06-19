@@ -102,17 +102,18 @@ var appBundles = [{
   // by the client.
   name: 'boot',
   entry: './src/boot/index',
+  transforms: ['babel'],
 },{
   // The sidebar application for displaying and editing annotations.
   name: 'app',
-  transforms: ['coffee'],
+  transforms: ['babel', 'coffee'],
   entry: './src/sidebar/app',
 },{
   // The annotation layer which handles displaying highlights, presenting
   // annotation tools on the page and instantiating the sidebar application.
   name: 'injector',
   entry: './src/annotator/main',
-  transforms: ['coffee'],
+  transforms: ['babel', 'coffee'],
 }];
 
 var appBundleConfigs = appBundles.map(function (config) {
@@ -263,8 +264,8 @@ var isFirstBuild = true;
 function generateBootScript(manifest) {
   var { version } = require('./package.json');
 
-  var defaultSidebarAppUrl = process.env.H_SERVICE_URL ?
-    `${process.env.H_SERVICE_URL}/app.html` : 'https://hypothes.is/app.html';
+  var defaultSidebarAppUrl = process.env.SIDEBAR_APP_URL ?
+    `${process.env.SIDEBAR_APP_URL}` : 'https://hypothes.is/app.html';
 
   var defaultAssetRoot;
 
@@ -326,6 +327,7 @@ gulp.task('serve-live-reload', ['serve-package'], function () {
   var LiveReloadServer = require('./scripts/gulp/live-reload-server');
   liveReloadServer = new LiveReloadServer(3000, {
     clientUrl: `http://${packageServerHostname()}:3001/hypothesis`,
+    enableMultiFrameSupport: !!process.env.MULTI_FRAME_SUPPORT,
   });
 });
 

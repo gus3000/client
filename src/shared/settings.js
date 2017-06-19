@@ -12,25 +12,40 @@ function assign(dest, src) {
 }
 
 /**
- * Return application configuration information from the host page.
+ * Return a parsed `js-hypothesis-config` object from the document, or `{}`.
  *
- * Exposes shared application settings, read from script tags with the
- * class `js-hypothesis-config` which contain JSON content.
+ * Find all `<script class="js-hypothesis-config">` tags in the given document,
+ * parse them as JSON, and return the parsed object.
  *
- * If there are multiple such tags, the configuration from each is merged.
+ * If there are no `js-hypothesis-config` tags in the document then return
+ * `{}`.
  *
- * @param {Document|Element} document - The root element to search for
- *                                      <script> settings tags.
+ * If there are multiple `js-hypothesis-config` tags in the document then merge
+ * them into a single returned object (when multiple scripts contain the same
+ * setting names, scripts further down in the document override those further
+ * up).
+ *
+ * @param {Document|Element} document - The root element to search.
  */
-function settings(document) {
+function jsonConfigsFrom(document) {
+  var config = {};
   var settingsElements =
     document.querySelectorAll('script.js-hypothesis-config');
 
-  var config = {};
   for (var i=0; i < settingsElements.length; i++) {
-    assign(config, JSON.parse(settingsElements[i].textContent));
+    var settings;
+    try {
+      settings = JSON.parse(settingsElements[i].textContent);
+    } catch (err) {
+      console.warn('Could not parse settings from js-hypothesis-config tags', err);
+      settings = {};
+    }
+    assign(config, settings);
   }
+
   return config;
 }
 
-module.exports = settings;
+module.exports = {
+  jsonConfigsFrom: jsonConfigsFrom,
+};

@@ -4,6 +4,103 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 # Change Log
 
+## [1.22.0] - 2017-06-16
+
+- No changes, re-running the release script after releasing 1.21.0 partially
+  succeeded.
+
+## [1.21.0] - 2017-06-15
+
+### Changed
+
+- When embedded in a page read the URL of the annotation API to talk to from
+  the page's `services` setting
+  ([#426](https://github.com/hypothesis/client/pull/426)).
+
+  This has also been documented
+  ([#450](https://github.com/hypothesis/client/pull/450)).
+
+  This also means that if the host page of an embedded client contains a
+  `services` setting then the `services[].apiUrl` sub-setting is mandatory,
+  otherwise the client will crash on load.
+
+- Support JavaScript ES2015 code in the client
+  ([#421](https://github.com/hypothesis/client/pull/421)).
+
+- Add Symbol polyfill (needed for some ES2015 language constructs)
+  ([#442](https://github.com/hypothesis/client/pull/442)).
+
+- Multiple frame detection and injection
+  ([#430](https://github.com/hypothesis/client/pull/430)).
+
+- Config code refactoring
+  ([#422](https://github.com/hypothesis/client/pull/422),
+  [#423](https://github.com/hypothesis/client/pull/423),
+  [#424](https://github.com/hypothesis/client/pull/424),
+  [#425](https://github.com/hypothesis/client/pull/425),
+  [#432](https://github.com/hypothesis/client/pull/432),
+  [#435](https://github.com/hypothesis/client/pull/435),
+  [#436](https://github.com/hypothesis/client/pull/436),
+  [#437](https://github.com/hypothesis/client/pull/437),
+  [#438](https://github.com/hypothesis/client/pull/438)).
+
+- Convert tags service to JS
+  ([#431](https://github.com/hypothesis/client/pull/431)).
+
+### Fixed
+
+- Don't crash if a page contains a js-hypothesis-config script containing
+  invalid JSON, instead log a warning and continue ignoring the invalid JSON
+  ([#427](https://github.com/hypothesis/client/pull/427)).
+
+- Don't crash if the page contains a `window.hypothesisConfig` that isn't a
+  function, instead log a warning and continue ignoring
+  `window.hypothesisConfig`
+  ([#428](https://github.com/hypothesis/client/pull/428)).
+
+- Fix dev environment JavaScript error on localhost:3000 page
+  ([#445](https://github.com/hypothesis/client/pull/445)).
+
+- Re-enable reading openLoginForm and openSidebar from the host page
+  (fixes the sidebar not auto-opening on the /welcome page after you install
+  the Chrome extension)
+  ([#447](https://github.com/hypothesis/client/pull/447)).
+
+- Upgrade gulp-sass (fixes a build error with Node v8)
+  ([#441](https://github.com/hypothesis/client/pull/441)).
+
+## [1.20.0] - 2017-06-06
+
+### Changed
+
+- Prevent Adder toolbar from inheriting CSS property values from host page
+  ([#396](https://github.com/hypothesis/client/pull/396)).
+
+- Improve config naming, usage, access and tests.
+  ([#400](https://github.com/hypothesis/client/pull/400)).
+  ([#404](https://github.com/hypothesis/client/pull/404)).
+  ([#406](https://github.com/hypothesis/client/pull/406)).
+  ([#415](https://github.com/hypothesis/client/pull/415)).
+
+- Refactored annotation query extraction
+  ([#411](https://github.com/hypothesis/client/pull/411)).
+  ([#412](https://github.com/hypothesis/client/pull/412)).
+
+- Added group leave, switch, and view activity metrics
+  ([#405](https://github.com/hypothesis/client/pull/405)).
+
+- Extensions now ignore all config other than direct linked ID from host page.
+  ([#410](https://github.com/hypothesis/client/pull/410)).
+
+- Fixed ghost adder ([#419](https://github.com/hypothesis/client/pull/419)).
+
+- Added the ability to search annotations by DOI
+  ([#417](https://github.com/hypothesis/client/pull/417)).
+  ([#418](https://github.com/hypothesis/client/pull/418)).
+
+- Added console log capture to karma tests
+  ([#420](https://github.com/hypothesis/client/pull/420)).
+
 ## [1.19.0] - 2017-05-23
 
 ### Changed

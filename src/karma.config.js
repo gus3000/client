@@ -79,6 +79,7 @@ module.exports = function(config) {
           // https://github.com/karma-runner/karma-coverage/issues/157
           instrumenter: require('isparta'),
         }),
+        'babelify',
       ],
     },
 
@@ -111,6 +112,12 @@ module.exports = function(config) {
     // level of logging
     // possible values: config.LOG_DISABLE || config.LOG_ERROR || config.LOG_WARN || config.LOG_INFO || config.LOG_DEBUG
     logLevel: config.LOG_INFO,
+
+    browserConsoleLogOptions: {
+      level: 'log',
+      format: '%b %T: %m',
+      terminal: true,
+    },
 
     // enable / disable watching file and executing tests whenever any file changes
     autoWatch: true,
