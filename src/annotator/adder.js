@@ -130,7 +130,7 @@ function Adder(container, options) {
     .addEventListener('click', handleCommand);
   self.element.querySelector(HIGHLIGHT_BTN_SELECTOR)
     .addEventListener('click', handleCommand);
-  element.querySelector(OTHER_BTN_SELECTOR)
+  self.element.querySelector(OTHER_BTN_SELECTOR)
     .addEventListener('click', handleCommand);
 
   function handleCommand(event) {
