@@ -7,6 +7,25 @@ module.exports = {
     this.catIndex = 0; //TODO use dropdown
     this.dropdownMenuLabel = ['A','B','C','D']; //TODO
 
+    this.categories = [
+      {
+        name: "A",
+        color: "#e00"
+      },
+      {
+        name: "B",
+        color: "#0e0"
+      },
+      {
+        name: "C",
+        color: "#00e"
+      },
+      {
+        name: "D",
+        color: "#808"
+      },
+    ];
+
     this.onClick = function () {
       this.catIndex++;
       console.log('category-btn click');
@@ -27,8 +46,9 @@ module.exports = {
 
     this.setCategory = function ($newcat) {
       this.category = $newcat;
-      var catTag = 'cat:'+ $newcat;
+      var catTag = 'cat:'+ $newcat.name;
 
+      // set category tag
       var currentCatIndex = this.tags.findIndex(this.isCategoryTag);
       if (currentCatIndex === -1) {
         this.tags.push(catTag);
@@ -37,7 +57,8 @@ module.exports = {
         this.tags[currentCatIndex] = catTag;
       }
 
-      console.log(this.tags);
+      // set button color
+      console.log(this.css());
     };
 
     this.getDescription = function () {
@@ -50,12 +71,14 @@ module.exports = {
   },
   controllerAs: 'vm',
   bindings: {
-    label: '<',
+    annotation: '<',
+    categories: '<',
+    color: '<',
     getCategory: '<',
     getDescription: '<',
-    color: '<',
-    annotation: '<',
+    label: '<',
     tags: '<',
+
     dropdownMenuLabel: '@',
     onClick: '&',
     onRobert: '&',
