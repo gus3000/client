@@ -5,15 +5,15 @@ module.exports = {
   controller: function () {
     this.category = "unknown";
     this.catIndex = 0; //TODO use dropdown
-    this.dropdownMenuLabel = ['A','B','C','D']; //TODO
+    //this.dropdownMenuLabel = ['A','B','C','D'];
 
     this.categories = [
       {
-        name: "A",
+        name: "Reference",
         color: "#e00"
       },
       {
-        name: "B",
+        name: "Link",
         color: "#0e0"
       },
       {
@@ -79,7 +79,7 @@ module.exports = {
     label: '<',
     tags: '<',
 
-    dropdownMenuLabel: '@',
+    // dropdownMenuLabel: '@',
     onClick: '&',
     onRobert: '&',
   },
