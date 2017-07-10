@@ -147,5 +147,9 @@
     "version": "make clean all && ./scripts/update-changelog.js && git add CHANGELOG.md",
     "postversion": "./scripts/postversion.sh",
     "prepublish": "yarn run build"
+  },
+  "dependencies": {
+    "gulp-cli": "^1.3.0",
+    "yarn": "^0.27.5"
   }
 }
