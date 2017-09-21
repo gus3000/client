@@ -130,8 +130,8 @@ function Adder(container, options) {
     .addEventListener('click', handleCommand);
   self.element.querySelector(HIGHLIGHT_BTN_SELECTOR)
     .addEventListener('click', handleCommand);
-  self.element.querySelector(OTHER_BTN_SELECTOR)
-    .addEventListener('click', handleCommand);
+//  self.element.querySelector(OTHER_BTN_SELECTOR)
+//    .addEventListener('click', handleCommand);
 
   function handleCommand(event) {
     event.preventDefault();
@@ -242,7 +242,7 @@ function Adder(container, options) {
     // See: https://github.com/hypothesis/client/issues/137
     self.element.querySelector(ANNOTATE_BTN_SELECTOR).style.display = '';
     self.element.querySelector(HIGHLIGHT_BTN_SELECTOR).style.display = '';
-    self.element.querySelector(OTHER_BTN_SELECTOR).style.display = '';
+//    self.element.querySelector(OTHER_BTN_SELECTOR).style.display = '';
 
 
     Object.assign(container.style, {
