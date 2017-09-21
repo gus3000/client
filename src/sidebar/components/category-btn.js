@@ -9,20 +9,24 @@ module.exports = {
 
     this.categories = [
       {
-        name: "Reference",
-        color: "#e00"
+        name: "Important",
+        color: "#0f75f1"
       },
       {
-        name: "Link",
-        color: "#0e0"
+        name: "Mot-clef",
+        color: "#db3498"
       },
       {
-        name: "C",
-        color: "#00e"
+        name: "Commentaire",
+        color: "#2ecc71"
       },
       {
-        name: "D",
-        color: "#808"
+        name: "Appel:expertise",
+        color: "#007533"
+      },
+      {
+        name: "Appel:discussion",
+        color: "#007533"
       },
     ];
 
