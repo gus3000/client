@@ -275,9 +275,9 @@ function generateBootScript(manifest) {
     defaultAssetRoot = `http://${packageServerHostname()}:3001/hypothesis/${version}/`;
   }
     //gus3000
-    defaultAssetRoot = process.env.CLIENT_URL + `/${version}/`
-    //defaultAssetRoot = `http://217.182.168.104:3001/hypothesis/${version}/`;
-    //defaultAssetRoot = `http://hyperthesis.chateau.tech:3001/hypothesis/${version}/`;
+  defaultAssetRoot = process.env.CLIENT_URL + `/${version}/`;
+  //defaultAssetRoot = `http://217.182.168.104:3001/hypothesis/${version}/`;
+  //defaultAssetRoot = `http://hyperthesis.chateau.tech:3001/hypothesis/${version}/`;
 
   if (isFirstBuild) {
     gulpUtil.log(`Sidebar app URL: ${defaultSidebarAppUrl}`);
