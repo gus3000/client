@@ -46,7 +46,7 @@ module.exports = {
     this.isCategoryTag = function(tag)
     {
       return tag.startsWith('cat:');
-    }
+    };
 
     this.setCategory = function ($newcat) {
       this.category = $newcat;
@@ -62,7 +62,7 @@ module.exports = {
       }
 
       // set button color
-      console.log(this.css());
+      // console.log(this.css());
     };
 
     this.getDescription = function () {
