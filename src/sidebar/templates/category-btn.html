@@ -1,7 +1,7 @@
 <div dropdown="" class="category-btn__btn" is-open="vm.showDropdown" keyboard-nav>
-  <dropdown-menu-btn label="'Category : ' + vm.getCategory().name" on-click="vm.onRobert()"
+  <dropdown-menu-btn label="'Category : ' + vm.getCategory().name"
   on-toggle-dropdown="vm.showDropdown = !vm.showDropdown"
-    title="{{vm.getDescription()}}" dropdown-menu-label="Change annotation category">
+    title="{{vm.getDescription()}}" dropdown-menu-label="Change annotation category" added-style="background-color: {{vm.getCategory().color}} !important"> <!-- -->
   </dropdown-menu-btn>
   <div class="category-btn__dropdown-container">
     <ul class="dropdown-menu pull-center group-list category-btn__dropdown-menu" role="menu">
