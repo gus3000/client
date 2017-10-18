@@ -1,11 +1,11 @@
 <div dropdown="" class="category-btn__btn" is-open="vm.showDropdown" keyboard-nav>
   <dropdown-menu-btn label="'Category : ' + vm.getCategory().name"
   on-toggle-dropdown="vm.showDropdown = !vm.showDropdown"
-    title="{{vm.getDescription()}}" dropdown-menu-label="Change annotation category" added-style="background-color: {{vm.getCategory().color}} !important"> <!-- -->
+    title="{{vm.getDescription()}}" dropdown-menu-label="Change annotation category" added-style="background-color: {{vm.getCategory().color}}"> <!-- -->
   </dropdown-menu-btn>
   <div class="category-btn__dropdown-container">
     <ul class="dropdown-menu pull-center group-list category-btn__dropdown-menu" role="menu">
-      <li class="dropdown-menu__row" ng-repeat="category in vm.categories" ng-click="vm.setCategory(category)" >
+      <li class="dropdown-menu__row" ng-repeat="category in vm.categories" ng-click="vm.setCategory(category)" ng-style="{ 'background-color': category.color + '50' }">
         <div class="group-item">
           <div class="group-icon-container">
             <i class="small h-icon-annotate"></i>
