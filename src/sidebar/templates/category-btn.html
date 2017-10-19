@@ -5,14 +5,14 @@
   </dropdown-menu-btn>
   <div class="category-btn__dropdown-container">
     <ul class="dropdown-menu pull-center group-list category-btn__dropdown-menu" role="menu">
-      <li class="dropdown-menu__row" ng-repeat="category in vm.categories" ng-click="vm.setCategory(category)" ng-style="{ 'background-color': category.color + '50' }">
+      <li class="dropdown-menu__row" ng-repeat="category in vm.categories" ng-click="vm.setCategory(category)">
         <div class="group-item">
           <div class="group-icon-container">
             <i class="small h-icon-annotate"></i>
           </div>
           <div class="group-details">
             <div class="group-name-container">
-              <a href="" class="group-name-link" ng-bind="category.name"></a>
+              <a href="" class="group-name-link" ng-bind="category.name"></a><span ng-style="{ 'color': category.color, 'font-size': '1.5em', 'margin-left': '0.5em' }">&#x25cf;</span>
             </div>
           </div>
         </div>
