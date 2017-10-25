@@ -26,7 +26,7 @@ describe('annotator.config.index', function() {
   });
 
   [
-    'app',
+    'sidebarAppUrl',
     'query',
     'annotations',
     'showHighlights',
@@ -44,7 +44,7 @@ describe('annotator.config.index', function() {
     beforeEach('remove the application/annotator+html <link>', function() {
       Object.defineProperty(
         fakeSettingsFrom(),
-        'app',
+        'sidebarAppUrl',
         {
           get: sinon.stub().throws(new Error("there's no link")),
         }
@@ -60,6 +60,8 @@ describe('annotator.config.index', function() {
   });
 
   [
+    'assetRoot',
+    'subFrameIdentifier',
     'openLoginForm',
     'openSidebar',
   ].forEach(function(settingName) {
@@ -85,6 +87,7 @@ describe('annotator.config.index', function() {
   });
 
   [
+    'assetRoot',
     'openLoginForm',
     'openSidebar',
     'branding',
@@ -92,14 +95,16 @@ describe('annotator.config.index', function() {
   ].forEach(function(settingName) {
     it('returns the ' + settingName + ' value from the host page', function() {
       var settings = {
+        'assetRoot': 'chrome-extension://1234/client/',
         'openLoginForm': 'OPEN_LOGIN_FORM_SETTING',
         'openSidebar': 'OPEN_SIDEBAR_SETTING',
+        'oauthEnabled': true,
         'branding': 'BRANDING_SETTING',
         'services': 'SERVICES_SETTING',
       };
       fakeSettingsFrom().hostPageSetting = function(settingName) {
         return settings[settingName];
-      };  
+      };
 
       var settingValue = configFrom('WINDOW')[settingName];
 

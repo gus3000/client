@@ -1,7 +1,9 @@
 'use strict';
 
 var proxyquire = require('proxyquire');
-var isLoaded = require('../../util/frame-util.js').isLoaded;
+var isLoaded = require('../../util/frame-util').isLoaded;
+
+var FRAME_DEBOUNCE_WAIT = require('../../frame-observer').DEBOUNCE_WAIT + 10;
 
 describe('CrossFrame multi-frame scenario', function () {
   var fakeAnnotationSync;
@@ -13,6 +15,10 @@ describe('CrossFrame multi-frame scenario', function () {
   var options;
 
   var sandbox = sinon.sandbox.create();
+
+  var waitForFrameObserver = function(cb){
+    return setTimeout(cb, FRAME_DEBOUNCE_WAIT);
+  };
 
   beforeEach(function () {
     fakeBridge = {
@@ -33,8 +39,9 @@ describe('CrossFrame multi-frame scenario', function () {
     document.body.appendChild(container);
 
     options = {
-      enableMultiFrameSupport: true,
-      embedScriptUrl: 'data:,', // empty data uri
+      config: {
+        clientUrl: 'data:,', // empty data uri
+      },
       on: sandbox.stub(),
       emit: sandbox.stub(),
     };
@@ -51,6 +58,7 @@ describe('CrossFrame multi-frame scenario', function () {
   it('detects frames on page', function () {
     // Create a frame before initializing
     var validFrame = document.createElement('iframe');
+    validFrame.setAttribute('enable-annotation', '');
     container.appendChild(validFrame);
 
     // Create another that mimics the sidebar frame
@@ -83,6 +91,7 @@ describe('CrossFrame multi-frame scenario', function () {
   it('detects removed frames', function () {
     // Create a frame before initializing
     var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
     container.appendChild(frame);
 
     // Now initialize
@@ -96,6 +105,7 @@ describe('CrossFrame multi-frame scenario', function () {
 
   it('injects embed script in frame', function () {
     var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
     container.appendChild(frame);
 
     crossFrame.pluginInit();
@@ -104,7 +114,7 @@ describe('CrossFrame multi-frame scenario', function () {
       isLoaded(frame, function () {
         var scriptElement = frame.contentDocument.querySelector('script[src]');
         assert(scriptElement, 'expected embed script to be injected');
-        assert.equal(scriptElement.src, options.embedScriptUrl,
+        assert.equal(scriptElement.src, options.config.clientUrl,
           'unexpected embed script source');
         resolve();
       });
@@ -113,6 +123,7 @@ describe('CrossFrame multi-frame scenario', function () {
 
   it('excludes injection from already injected frames', function () {
     var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
     frame.srcdoc = '<script>window.__hypothesis_frame = true;</script>';
     container.appendChild(frame);
 
@@ -133,23 +144,25 @@ describe('CrossFrame multi-frame scenario', function () {
 
     // Add a frame to the DOM
     var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
     container.appendChild(frame);
 
     return new Promise(function (resolve) {
       // Yield to let the DOM and CrossFrame catch up
-      setTimeout(function () {
+      waitForFrameObserver(function () {
         isLoaded(frame, function () {
           assert(frame.contentDocument.body.hasChildNodes(),
             'expected dynamically added frame to be modified');
           resolve();
         });
-      }, 0);
+      });
     });
   });
 
   it('detects dynamically removed frames', function () {
     // Create a frame before initializing
     var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
     container.appendChild(frame);
 
     // Now initialize
@@ -157,15 +170,90 @@ describe('CrossFrame multi-frame scenario', function () {
 
     return new Promise(function (resolve) {
       // Yield to let the DOM and CrossFrame catch up
-      setTimeout(function () {
+      waitForFrameObserver(function () {
         frame.remove();
 
         // Yield again
-        setTimeout(function () {
+        waitForFrameObserver(function () {
           assert.calledWith(fakeBridge.call, 'destroyFrame');
           resolve();
-        }, 0);
-      }, 0);
+        });
+      });
+    });
+  });
+
+  it('detects a frame dynamically removed, and added again', function () {
+    // Create a frame before initializing
+    var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
+    container.appendChild(frame);
+
+    // Now initialize
+    crossFrame.pluginInit();
+
+    return new Promise(function (resolve) {
+
+      isLoaded(frame, function () {
+        assert(frame.contentDocument.body.hasChildNodes(),
+          'expected initial frame to be modified');
+
+        frame.remove();
+
+        // Yield to let the DOM and CrossFrame catch up
+        waitForFrameObserver(function () {
+
+          // Add the frame again
+          container.appendChild(frame);
+
+          // Yield again
+          waitForFrameObserver(function () {
+
+            isLoaded(frame, function () {
+              assert(frame.contentDocument.body.hasChildNodes(),
+                'expected dynamically added frame to be modified');
+              resolve();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it('detects a frame dynamically added, removed, and added again', function () {
+
+    // Initialize with no initial frame
+    crossFrame.pluginInit();
+
+    // Add a frame to the DOM
+    var frame = document.createElement('iframe');
+    frame.setAttribute('enable-annotation', '');
+    container.appendChild(frame);
+
+    return new Promise(function (resolve) {
+      // Yield to let the DOM and CrossFrame catch up
+      waitForFrameObserver(function () {
+        isLoaded(frame, function () {
+          assert(frame.contentDocument.body.hasChildNodes(),
+            'expected dynamically added frame to be modified');
+
+          frame.remove();
+
+          // Yield again
+          waitForFrameObserver(function () {
+            // Add the frame again
+            container.appendChild(frame);
+
+            // Yield
+            waitForFrameObserver(function () {
+              isLoaded(frame, function () {
+                assert(frame.contentDocument.body.hasChildNodes(),
+                  'expected dynamically added frame to be modified');
+                resolve();
+              });
+            });
+          });
+        });
+      });
     });
   });
 

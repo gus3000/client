@@ -1,7 +1,8 @@
 'use strict';
 
-// ES2015 polyfills
+// ES2015
 require('core-js/es6/promise');
+require('core-js/es6/map');
 require('core-js/es6/set');
 require('core-js/es6/symbol');
 require('core-js/fn/array/find');
@@ -13,6 +14,7 @@ require('core-js/fn/string/ends-with');
 require('core-js/fn/string/starts-with');
 
 // ES2017
+require('core-js/fn/object/entries');
 require('core-js/fn/object/values');
 
 // URL constructor, required by IE 10/11,

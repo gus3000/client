@@ -5,12 +5,21 @@
  * on $rootScope
  */
 module.exports = {
+
+  // Internal state changes
+  FRAME_CONNECTED: 'frameConnected',
+
   // Session state changes
 
   /** The list of groups changed */
   GROUPS_CHANGED: 'groupsChanged',
   /** The logged-in user changed */
   USER_CHANGED: 'userChanged',
+  /**
+   * API tokens were fetched and saved to local storage by another client
+   * instance.
+   */
+  OAUTH_TOKENS_CHANGED: 'oauthTokensChanged',
 
   // UI state changes
 

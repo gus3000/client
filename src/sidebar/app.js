@@ -1,8 +1,10 @@
 'use strict';
 
 var addAnalytics = require('./ga');
+var disableOpenerForExternalLinks = require('./util/disable-opener-for-external-links');
 var getApiUrl = require('./get-api-url');
 var serviceConfig = require('./service-config');
+var crossOriginRPC = require('./cross-origin-rpc.js');
 require('../shared/polyfills');
 
 var raven;
@@ -29,6 +31,9 @@ settings.apiUrl = getApiUrl(settings);
 // The `ng-csp` attribute must be set on some HTML element in the document
 // _before_ Angular is require'd for the first time.
 document.body.setAttribute('ng-csp', '');
+
+// Prevent tab-jacking.
+disableOpenerForExternalLinks(document.body);
 
 var angular = require('angular');
 
@@ -109,8 +114,29 @@ function processAppOpts() {
   }
 }
 
+function canSetCookies() {
+  // Try to add a short-lived cookie. Note the `document.cookie` setter has
+  // unusual semantics, this doesn't overwrite other cookies.
+  document.cookie = 'cookie-setter-test=1;max-age=5';
+  return document.cookie.indexOf('cookie-setter-test=1') !== -1;
+}
+
+function shouldUseOAuth() {
+  if (serviceConfig(settings)) {
+    // If the host page supplies annotation service configuration, including a
+    // grant token, use OAuth.
+    return true;
+  }
+  if (!canSetCookies()) {
+    // If cookie storage is blocked by the browser, we have to use OAuth.
+    return true;
+  }
+  // Otherwise, use OAuth only if the feature flag is enabled.
+  return settings.oauthClientId && settings.oauthEnabled;
+}
+
 var authService;
-if (serviceConfig(settings)) {
+if (shouldUseOAuth()) {
   authService = require('./oauth-auth');
 } else {
   authService = require('./auth');
@@ -185,6 +211,7 @@ module.exports = angular.module('h', [
   .service('analytics', require('./analytics'))
   .service('annotationMapper', require('./annotation-mapper'))
   .service('annotationUI', require('./annotation-ui'))
+  .service('apiRoutes', require('./api-routes'))
   .service('auth', authService)
   .service('bridge', require('../shared/bridge'))
   .service('drafts', require('./drafts'))
@@ -211,6 +238,7 @@ module.exports = angular.module('h', [
   .value('Discovery', require('../shared/discovery'))
   .value('ExcerptOverflowMonitor', require('./util/excerpt-overflow-monitor'))
   .value('VirtualThreadList', require('./virtual-thread-list'))
+  .value('random', require('./util/random'))
   .value('raven', require('./raven'))
   .value('serviceConfig', serviceConfig)
   .value('settings', settings)
@@ -222,9 +250,21 @@ module.exports = angular.module('h', [
   .config(configureRoutes)
   .config(configureToastr)
 
-  .run(setupHttp);
+  .run(setupHttp)
+  .run(crossOriginRPC.server.start);
 
 processAppOpts();
+
+// Work around a check in Angular's $sniffer service that causes it to
+// incorrectly determine that Firefox extensions are Chrome Packaged Apps which
+// do not support the HTML 5 History API. This results Angular redirecting the
+// browser on startup and thus the app fails to load.
+// See https://github.com/angular/angular.js/blob/a03b75c6a812fcc2f616fc05c0f1710e03fca8e9/src/ng/sniffer.js#L30
+if (window.chrome && !window.chrome.app) {
+  window.chrome.app = {
+    dummyAddedByHypothesisClient: true,
+  };
+}
 
 var appEl = document.querySelector('hypothesis-app');
 angular.bootstrap(appEl, ['h'], {strictDi: true});

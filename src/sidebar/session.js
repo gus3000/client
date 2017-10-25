@@ -91,8 +91,12 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
       lastLoadTime = Date.now();
       lastLoad = retryUtil.retryPromiseOperation(function () {
         var authority = getAuthority();
-        if (authority) {
-          return store.profile.read({authority: authority}).then(update);
+        if (auth.login || authority) {
+          var opts = {};
+          if (authority) {
+            opts.authority = authority;
+          }
+          return store.profile.read(opts).then(update);
         } else {
           return resource._load().$promise;
         }
@@ -128,9 +132,6 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
    */
   function update(model) {
     var prevSession = annotationUI.getState().session;
-
-    var isInitialLoad = !prevSession.csrf;
-
     var userChanged = model.userid !== prevSession.userid;
     var groupsChanged = !angular.equals(model.groups, prevSession.groups);
 
@@ -146,13 +147,17 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
     lastLoadTime = Date.now();
 
     if (userChanged) {
-      if (!getAuthority()) {
+      if (!auth.login) {
+        // When using cookie-based auth, notify the auth service that the current
+        // login has changed and API tokens need to be invalidated.
+        //
+        // This is not needed for OAuth-based auth because all login/logout
+        // activities happen through the auth service itself.
         auth.clearCache();
       }
 
       $rootScope.$broadcast(events.USER_CHANGED, {
-        initialLoad: isInitialLoad,
-        userid: model.userid,
+        profile: model,
       });
 
       // associate error reports with the current user in Sentry
@@ -166,9 +171,7 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
     }
 
     if (groupsChanged) {
-      $rootScope.$broadcast(events.GROUPS_CHANGED, {
-        initialLoad: isInitialLoad,
-      });
+      $rootScope.$broadcast(events.GROUPS_CHANGED);
     }
 
     // Return the model
@@ -204,10 +207,32 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
     return update(model);
   }
 
+  /**
+   * Log the user out of the current session.
+   */
   function logout() {
-    return resource.logout().$promise.then(function () {
-      auth.clearCache();
-    }).catch(function (err) {
+    var loggedOut;
+
+    if (auth.logout) {
+      loggedOut = auth.logout().then(() => {
+        // When using OAuth, we have to explicitly re-fetch the logged-out
+        // user's profile.
+        // When using cookie-based auth, `resource.logout()` handles this
+        // automatically.
+        return reload();
+      });
+    } else {
+      loggedOut = resource.logout().$promise.then(() => {
+        // When using cookie-based auth, notify the auth service that the current
+        // login has changed and API tokens need to be invalidated.
+        //
+        // This is not needed for OAuth-based auth because all login/logout
+        // activities happen through the auth service itself.
+        auth.clearCache();
+      });
+    }
+
+    return loggedOut.catch(function (err) {
       flash.error('Log out failed');
       analytics.track(analytics.events.LOGOUT_FAILURE);
       return $q.reject(new Error(err));
@@ -216,12 +241,27 @@ function session($http, $q, $resource, $rootScope, analytics, annotationUI, auth
     });
   }
 
+  /**
+   * Clear the cached profile information and re-fetch it from the server.
+   *
+   * This can be used to refresh the user's profile state after logging in.
+   */
+  function reload() {
+    lastLoad = null;
+    lastLoadTime = null;
+    return resource.load();
+  }
+
+  $rootScope.$on(events.OAUTH_TOKENS_CHANGED, () => {
+    reload();
+  });
 
   return {
     dismissSidebarTutorial: dismissSidebarTutorial,
     load: resource.load,
     login: resource.login,
     logout: logout,
+    reload: reload,
 
     // For the moment, we continue to expose the session state as a property on
     // this service. In future, other services which access the session state

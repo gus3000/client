@@ -1,54 +1,80 @@
 'use strict';
 
 var angular = require('angular');
+var service = require('../local-storage');
+
+function windowWithLocalStoragePropertyThatThrows() {
+  var win = {};
+  Object.defineProperty(win, 'localStorage', {
+    get() {
+      throw Error('denied');
+    },
+  });
+  return win;
+}
+
+function windowWithLocalStorageMethodsThatThrow() {
+  var throwErr = sinon.stub.throws(new Error('Denied'));
+
+  return {
+    localStorage: {
+      getItem: throwErr,
+      removeItem: throwErr,
+      setItem: throwErr,
+    },
+  };
+}
 
 describe('sidebar.localStorage', () => {
   var fakeWindow;
 
   before(() =>
     angular.module('h', [])
-      .service('localStorage', require('../local-storage'))
+      .service('localStorage', service)
   );
 
-  context('when browser localStorage is *not* accessible', () => {
-    var localStorage = null;
-    var key = null;
+  [
+    windowWithLocalStorageMethodsThatThrow(),
+    windowWithLocalStoragePropertyThatThrows(),
+  ].forEach(($window) => {
+    context('when browser localStorage is *not* accessible', () => {
+      var localStorage = null;
+      var key = null;
 
-    beforeEach(() => {
-      angular.mock.module('h', {
-        $window: {
-          localStorage: {},
-        },
+      beforeEach(() => {
+        angular.mock.module('h', {
+          $window,
+        });
       });
-    });
 
-    beforeEach(angular.mock.inject((_localStorage_) => {
-      localStorage = _localStorage_;
-      key = 'test.memory.key';
-    }));
+      beforeEach(angular.mock.inject((_localStorage_) => {
+        localStorage = _localStorage_;
+        key = 'test.memory.key';
+      }));
 
-    it('sets/gets Item', () => {
-      var value = 'What shall we do with a drunken sailor?';
-      localStorage.setItem(key, value);
-      var actual = localStorage.getItem(key);
-      assert.equal(value, actual);
-    });
+      it('sets/gets Item', () => {
+        var value = 'What shall we do with a drunken sailor?';
+        localStorage.setItem(key, value);
+        var actual = localStorage.getItem(key);
+        assert.equal(value, actual);
+      });
 
-    it('removes item', () => {
-      localStorage.setItem(key, '');
-      localStorage.removeItem(key);
-      var result = localStorage.getItem(key);
-      assert.isNull(result);
-    });
+      it('removes item', () => {
+        localStorage.setItem(key, '');
+        localStorage.removeItem(key);
+        var result = localStorage.getItem(key);
+        assert.isNull(result);
+      });
 
-    it('sets/gets Object', () => {
-      var data = {'foo': 'bar'};
-      localStorage.setObject(key, data);
-      var stringified = localStorage.getItem(key);
-      assert.equal(stringified, JSON.stringify(data));
+      it('sets/gets Object', () => {
+        var data = {'foo': 'bar'};
+        localStorage.setObject(key, data);
+        var stringified = localStorage.getItem(key);
+        assert.equal(stringified, JSON.stringify(data));
 
-      var actual = localStorage.getObject(key);
-      assert.deepEqual(actual, data);
+        var actual = localStorage.getObject(key);
+        assert.deepEqual(actual, data);
+      });
     });
   });
 

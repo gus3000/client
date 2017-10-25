@@ -1,6 +1,17 @@
 'use strict';
 
 /**
+* Return an HTML5 audio player with the given src URL.
+*/
+
+function audioElement(src) {
+  var html5audio = document.createElement('audio');
+  html5audio.controls = true;
+  html5audio.src      =  src;
+  return html5audio;
+}
+
+/**
  * Return an iframe DOM element with the given src URL.
  */
 function iframe(src) {
@@ -23,9 +34,10 @@ function vimeoEmbed(id) {
   return iframe('https://player.vimeo.com/video/' + id);
 }
 
+
 /**
- * A list of functions that return an "embed" DOM element (e.g. an <iframe>)
- * for a given link.
+ * A list of functions that return an "embed" DOM element (e.g. an <iframe> or
+ * an html5 <audio> element) for a given link.
  *
  * Each function either returns `undefined` if it can't generate an embed for
  * the link, or a DOM element if it can.
@@ -88,6 +100,56 @@ var embedGenerators = [
     }
     return null;
   },
+
+  /**
+   * Match Internet Archive URLs
+   *
+   *  The patterns are:
+   *
+   *  1. https://archive.org/embed/{slug}?start={startTime}&end={endTime}
+   *     (Embed links)
+   *
+   *  2. https://archive.org/details/{slug}?start={startTime}&end={endTime}
+   *     (Video page links for most videos)
+   *
+   *  3. https://archive.org/details/{slug}/start/{startTime}/end/{endTime}
+   *     (Video page links for the TV News Archive [1])
+   *
+   *  (2) and (3) allow users to copy and paste URLs from archive.org video
+   *  details pages directly into the sidebar to generate video embeds.
+   *
+   *  [1] https://archive.org/details/tv
+   */
+  function iFrameFromInternetArchiveLink(link) {
+    if (link.hostname !== 'archive.org') {
+      return null;
+    }
+
+    var groups = /(embed|details)\/(.+)$/.exec(link.href);
+    if (!groups) {
+      return null;
+    }
+
+    var path = groups[2]; // group 2 is the path
+
+    // Convert `/details` paths to `/embed` paths. TV News Archive links put
+    // the start & end times in the paths whereas the embed links always use
+    // "start" and "end" query params.
+    path = path.replace('/start/', '?start=');
+    path = path.replace('/end/', '&end=');
+
+    return iframe('https://archive.org/embed/' + path);
+  },
+
+
+  // Matches URLs that end with .mp3, .ogg, or .wav (assumed to be audio files)
+  function html5audioFromMp3Link(link) {
+    if (link.pathname.endsWith('.mp3') || link.pathname.endsWith('.ogg') || link.pathname.endsWith('.wav')) {
+      return audioElement(link.href);
+    }
+    return null;
+  },
+
 ];
 
 /**
@@ -115,7 +177,7 @@ function embedForLink(link) {
  *
  * If the given link element is a link to an embeddable media and if its link
  * text is the same as its href then it will be replaced in the DOM with an
- * embed (e.g. an <iframe>) of the same media.
+ * embed (e.g. an <iframe> or html5 <audio> element) of the same media.
  *
  * If the link text is different from the href, then the link will be left
  * untouched. We want to convert links like these from the Markdown source into
@@ -138,13 +200,11 @@ function replaceLinkWithEmbed(link) {
   if (link.href !== link.textContent) {
     return;
   }
-
   var embed = embedForLink(link);
-  if (embed) {
+  if (embed){
     link.parentElement.replaceChild(embed, link);
   }
 }
-
 
 /**
  * Replace all embeddable link elements beneath the given element with embeds.

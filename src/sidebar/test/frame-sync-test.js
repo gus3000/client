@@ -28,6 +28,7 @@ var fixtures = {
     metadata: {
       link: [],
     },
+    frameIdentifier: null,
   },
 
   // Response to the `getDocumentInfo` channel message for a frame displaying
@@ -38,6 +39,14 @@ var fixtures = {
       documentFingerprint: '1234',
       link: [{href: 'http://example.org/paper.pdf'}, {href:'urn:1234'}],
     },
+    frameIdentifier: null,
+  },
+
+  // The entry in the list of frames currently connected
+  framesListEntry: {
+    id: 'abc',
+    uri: 'http://example.com',
+    isAnnotationFetchComplete: true,
   },
 };
 
@@ -55,9 +64,10 @@ describe('FrameSync', function () {
   beforeEach(function () {
     fakeAnnotationUI = fakeStore({annotations: []}, {
       connectFrame: sinon.stub(),
+      destroyFrame: sinon.stub(),
       findIDsForTags: sinon.stub(),
       focusAnnotations: sinon.stub(),
-      frames: sinon.stub().returns([{uri: 'http://example.com', isAnnotationFetchComplete: true }]),
+      frames: sinon.stub().returns([fixtures.framesListEntry]),
       selectAnnotations: sinon.stub(),
       selectTab: sinon.stub(),
       toggleSelectedAnnotations: sinon.stub(),
@@ -208,9 +218,20 @@ describe('FrameSync', function () {
       fakeBridge.emit('connect', fakeChannel);
 
       assert.calledWith(fakeAnnotationUI.connectFrame, {
+        id: frameInfo.frameIdentifier,
         metadata: frameInfo.metadata,
         uri: frameInfo.uri,
       });
+    });
+  });
+
+  context('when a frame is destroyed', function () {
+    var frameId = fixtures.framesListEntry.id;
+
+    it('removes the frame from the frames list', function () {
+      fakeBridge.emit('destroyFrame', frameId);
+
+      assert.calledWith(fakeAnnotationUI.destroyFrame, fixtures.framesListEntry);
     });
   });
 
@@ -247,6 +268,26 @@ describe('FrameSync', function () {
       fakeBridge.emit('sidebarOpened');
 
       assert.called(onSidebarOpened);
+    });
+  });
+
+  describe ('on a relayed bridge call', function() {
+    it ('calls "showSidebar"', function() {
+      fakeBridge.emit('showSidebar');
+
+      assert.calledWith(fakeBridge.call, 'showSidebar');
+    });
+
+    it ('calls "hideSidebar"', function() {
+      fakeBridge.emit('hideSidebar');
+
+      assert.calledWith(fakeBridge.call, 'hideSidebar');
+    });
+
+    it ('calls "setVisibleHighlights"', function() {
+      fakeBridge.emit('setVisibleHighlights');
+
+      assert.calledWith(fakeBridge.call, 'setVisibleHighlights');
     });
   });
 });

@@ -10,10 +10,10 @@ function settingsFrom(window_) {
   var configFuncSettings = configFuncSettingsFrom(window_);
 
   /**
-   * Return the href URL of the first annotator link in the given document.
+   * Return the href URL of the first annotator sidebar link in the given document.
    *
    * Return the value of the href attribute of the first
-   * `<link type="application/annotator+html">` element in the given document.
+   * `<link type="application/annotator+html" rel="sidebar">` element in the given document.
    *
    * This URL is used as the src of the sidebar's iframe.
    *
@@ -23,15 +23,45 @@ function settingsFrom(window_) {
    *   no href.
    *
    */
-  function app() {
-    var link = window_.document.querySelector('link[type="application/annotator+html"]');
+  function sidebarAppUrl() {
+    var link = window_.document.querySelector('link[type="application/annotator+html"][rel="sidebar"]');
 
     if (!link) {
-      throw new Error('No application/annotator+html link in the document');
+      throw new Error('No application/annotator+html (rel="sidebar") link in the document');
     }
 
     if (!link.href) {
-      throw new Error('application/annotator+html link has no href');
+      throw new Error('application/annotator+html (rel="sidebar") link has no href');
+    }
+
+    return link.href;
+  }
+
+
+  /**
+   * Return the href URL of the first annotator client link in the given document.
+   *
+   * Return the value of the href attribute of the first
+   * `<link type="application/annotator+html" rel="hypothesis-client">` element in the given document.
+   *
+   * This URL is used to identify where the client is from and what url should be
+   *    used inside of subframes
+   *
+   * @return {string} - The URL that the client is hosted from
+   *
+   * @throws {Error} - If there's no annotator link or the first annotator has
+   *   no href.
+   *
+   */
+  function clientUrl() {
+    var link = window_.document.querySelector('link[type="application/annotator+javascript"][rel="hypothesis-client"]');
+
+    if (!link) {
+      throw new Error('No application/annotator+javascript (rel="hypothesis-client") link in the document');
+    }
+
+    if (!link.href) {
+      throw new Error('application/annotator+javascript (rel="hypothesis-client") link has no href');
     }
 
     return link.href;
@@ -96,7 +126,7 @@ function settingsFrom(window_) {
       var queryFragmentMatch = window_.location.href.match(/#annotations:(query|q):(.+)$/i);
       if (queryFragmentMatch) {
         try {
-          return decodeURI(queryFragmentMatch[2]);
+          return decodeURIComponent(queryFragmentMatch[2]);
         } catch (err) {
           // URI Error should return the page unfiltered.
         }
@@ -110,7 +140,7 @@ function settingsFrom(window_) {
   function hostPageSetting(name, options = {}) {
     var allowInBrowserExt = options.allowInBrowserExt || false;
 
-    if (!allowInBrowserExt && isBrowserExtension(app())) {
+    if (!allowInBrowserExt && isBrowserExtension(sidebarAppUrl())) {
       return null;
     }
 
@@ -126,9 +156,10 @@ function settingsFrom(window_) {
   }
 
   return {
-    get app() { return app(); },
     get annotations() { return annotations(); },
+    get clientUrl() { return clientUrl(); },
     get showHighlights() { return showHighlights(); },
+    get sidebarAppUrl() { return sidebarAppUrl(); },
     get query() { return query(); },
     hostPageSetting: hostPageSetting,
   };

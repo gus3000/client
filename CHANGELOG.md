@@ -4,6 +4,294 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 # Change Log
 
+## [1.48.0] - 2017-10-23
+
+### Changed
+
+- Support Internet Archive video embeds
+  ([#554](https://github.com/hypothesis/client/pull/554)).
+
+## [1.47.0] - 2017-10-03
+
+### Changed
+
+- Send search URIs to other frames by postMessage()
+  ([#550](https://github.com/hypothesis/client/pull/550)).
+
+## [1.46.0] - 2017-09-22
+
+### Changed
+
+- Re-fetch annotations when logging in or out when using OAuth
+  ([#552](https://github.com/hypothesis/client/pull/552)).
+
+## [1.45.0] - 2017-09-22
+
+### Changed
+
+- Adjust the preferred initial size of the login window.
+  ([#547](https://github.com/hypothesis/client/pull/547)).
+
+- Stop exporting the main annotation layer object as `window.annotator`
+  ([#549](https://github.com/hypothesis/client/pull/549)).
+
+- Remove iframe size check
+  ([#551](https://github.com/hypothesis/client/pull/551)).
+
+## [1.44.0] - 2017-09-20
+
+### Changed
+
+- Fix timestamp tooltips in annotation cards
+  ([#546](https://github.com/hypothesis/client/pull/546)).
+
+## [1.43.0] - 2017-09-18
+
+### Changed
+
+- Use profile display name in account menu
+  ([#544](https://github.com/hypothesis/client/pull/544)).
+
+- Fix handling of query terms without fields specified in client-side search
+  ([#505](https://github.com/hypothesis/client/pull/505)).
+
+## [1.42.0] - 2017-09-15
+
+### Changed
+
+- Render display name instead of username in existing annotations
+  ([#541](https://github.com/hypothesis/client/pull/541)).
+
+- Render display name instead of username in new annotations
+  ([#545](https://github.com/hypothesis/client/pull/545)).
+
+## [1.41.0] - 2017-09-11
+
+### Changed
+
+- Fix OAuth popup window failing to load in IE 11
+  ([#538](https://github.com/hypothesis/client/pull/538)).
+
+- Fix OAuth popup being blocked by pop-up blocker in Firefox and IE
+  ([#537](https://github.com/hypothesis/client/pull/537)).
+
+## [1.40.0] - 2017-09-11
+
+### Changed
+
+- Make annotation of iframes require opt-in by adding an "enable-annotation"
+  attribute ([#533](https://github.com/hypothesis/client/pull/533)).
+
+## [1.39.0] - 2017-09-06
+
+### Changed
+
+- Always use OAuth if cookie storage is blocked
+  ([#529](https://github.com/hypothesis/client/pull/529)).
+
+## [1.38.0] - 2017-09-05
+
+### Changed
+
+- Work around Chrome bug causing sidebar to become invisible
+  ([#523](https://github.com/hypothesis/client/pull/523)).
+
+## [1.37.0] - 2017-09-04
+
+### Changed
+
+- Use public, documented API method to leave groups
+  ([#528](https://github.com/hypothesis/client/pull/528)).
+
+## [1.36.0] - 2017-08-21
+
+### Changed
+
+- Refresh OAuth tokens "on demand" when making API calls
+  ([#517](https://github.com/hypothesis/client/pull/517)).
+
+- Reload OAuth tokens and profile when tokens are changed by another client
+  instance ([#518](https://github.com/hypothesis/client/pull/518)).
+
+- Deprecate "openLoginForm" setting and make a no-op when using OAuth
+  ([#524](https://github.com/hypothesis/client/pull/524)).
+
+- Get OAuth endpoints from the service's `/api/links` endpoint
+  ([#525](https://github.com/hypothesis/client/pull/525)).
+
+## [1.35.0] - 2017-08-09
+
+### Changed
+
+- Implement logout when using OAuth
+  ([#501](https://github.com/hypothesis/client/pull/501)).
+
+## [1.34.0] - 2017-08-03
+
+### Changed
+
+- Make login work when using OAuth following recent changes to the service's
+  OAuth implementation ([#514](https://github.com/hypothesis/client/pull/514)).
+
+- Automatically convert links ending with audio extensions (mp3, ogg, wav) to
+  embedded audio players ([#508](https://github.com/hypothesis/client/pull/508)).
+
+## [1.33.0] - 2017-08-01
+
+### Changed
+
+- Add onLayoutChange documentation
+  ([#503](https://github.com/hypothesis/client/pull/503)).
+
+- Remove the alternate tab switcher design
+  ([#513](https://github.com/hypothesis/client/pull/513)).
+
+## [1.32.1] - 2017-07-25
+
+### Changed
+
+- Fix IE 10/11 regression in documents without a `<base>` element.
+  ([#507](https://github.com/hypothesis/client/pull/507)).
+
+## [1.32.0] - 2017-07-20
+
+### Changed
+
+- Support using `dc.relation.ispartof` and `dc.identifier` meta tags to
+  generate a URN for documents which are part of a larger work (eg. a book
+  chapter)
+  ([#500](https://github.com/hypothesis/client/pull/500)).
+
+## [1.31.0] - 2017-07-17
+
+### Changed
+
+- Add mechanism for publishers to react to changes in the width and expanded
+  state of the sidebar ([#499](https://github.com/hypothesis/client/pull/499)).
+
+## [1.30.0] - 2017-07-14
+
+### Changed
+
+- Enable annotating in iframes which have the same origin as the top-level page
+  ([#498](https://github.com/hypothesis/client/pull/498)).
+
+## [1.29.0] - 2017-07-14
+
+### Changed
+
+- Remove need to set feature flag to enable iframe support
+  ([#496](https://github.com/hypothesis/client/pull/496)).
+
+- Do not inject client into small or hidden iframes
+  ([#497](https://github.com/hypothesis/client/pull/497)).
+
+- Persist login between sessions when using OAuth
+  ([#494](https://github.com/hypothesis/client/pull/494)).
+
+## [1.28.0] - 2017-07-11
+
+### Changed
+
+- Use OAuth for first party login if feature flag enabled.
+  ([#476](https://github.com/hypothesis/client/pull/476)).
+
+- Fix adder position when document or body position is offset.
+  ([#493](https://github.com/hypothesis/client/pull/493)).
+
+## [1.27.0] - 2017-07-06
+
+### Changed
+
+- Allow integrators to customize behavior of scrolling to
+  highlights by intercepting the "scrolltorange" event
+  ([#484](https://github.com/hypothesis/client/pull/484)).
+
+## [1.26.0] - 2017-07-05
+
+### Changed
+
+- Fix view switcher flash on iOS
+  ([#482](https://github.com/hypothesis/client/pull/482)).
+
+- Fix decoding of the query section in "#annotations" fragments
+  ([#483](https://github.com/hypothesis/client/pull/483)).
+
+- Get document URL from `<base>` tag for iframes with `blob:` URLs
+  ([#474](https://github.com/hypothesis/client/pull/474)).
+
+- Improve handling of iframe removal when multiple iframes have
+  same `src` URL
+  ([#478](https://github.com/hypothesis/client/pull/478)).
+
+- Don't show view switcher until annotations received
+  ([#481](https://github.com/hypothesis/client/pull/481)).
+
+## [1.25.0] - 2017-06-30
+
+### Changed
+
+- Progress towards making the Hypothesis client able to annotate content inside
+  iframes
+  ([#457](https://github.com/hypothesis/client/pull/457),
+  [#469](https://github.com/hypothesis/client/pull/469),
+  [#472](https://github.com/hypothesis/client/pull/472),
+  [#467](https://github.com/hypothesis/client/pull/467)).
+
+- Progress towards using OAuth tokens, rather than cookies, to authenticate the
+  Hypothesis client to the Hypothesis API - allow "oauthEnabled" setting to be
+  overridden in client config
+  ([#470](https://github.com/hypothesis/client/pull/470)).
+
+- A UI enhancement: Replace "selection tabs" with "view switcher" (feature flagged)
+  ([#465](https://github.com/hypothesis/client/pull/465)).
+
+- Convert unicode service & tests to JavaScript
+  ([#475](https://github.com/hypothesis/client/pull/475)).
+
+## [1.24.1] - 2017-06-27
+
+### Changed
+
+- Fix failure to start when browser blocks access to localStorage
+  ([#464](https://github.com/hypothesis/client/pull/464)).
+
+## [1.24.0] - 2017-06-26
+
+### Changed
+
+- Enable feature flagging in the annotation layer
+  ([#440](https://github.com/hypothesis/client/pull/440)).
+
+- Fix sidebar app failing to load in Firefox extension.
+  ([#460](https://github.com/hypothesis/client/pull/460)).
+
+## [1.23.0] - 2017-06-19
+
+### Changed
+
+- Fixes always off highlighting issue.
+  Add showHighlights() settings function.
+  ([#455](https://github.com/hypothesis/client/pull/455)).
+
+- Convert localStorage service from CoffeeScript to JS
+  ([#443](https://github.com/hypothesis/client/pull/443)).
+
+- Fix warning about loading Angular twice in tests
+  ([#448](https://github.com/hypothesis/client/pull/448)).
+
+- Convert shared Bridge class to JS
+  ([#449](https://github.com/hypothesis/client/pull/449)).
+
+- Remove assetRoot and sidebarAppUrl from annotator
+  ([#452](https://github.com/hypothesis/client/pull/452)).
+
+- Rename H_SERVICE_URL to SIDEBAR_APP_URL
+  ([#454](https://github.com/hypothesis/client/pull/454)).
+
+- Remove unused "host" service
+  ([#446](https://github.com/hypothesis/client/pull/446)).
+
 ## [1.22.0] - 2017-06-16
 
 - No changes, re-running the release script after releasing 1.21.0 partially

@@ -8,12 +8,22 @@ var scopeTimeout = require('../util/scope-timeout');
 var serviceConfig = require('../service-config');
 var bridgeEvents = require('../../shared/bridge-events');
 
-function authStateFromUserID(userid) {
-  if (userid) {
-    var parsed = parseAccountID(userid);
+/**
+ * Return the user's authentication status from their profile.
+ *
+ * @param {Profile} profile - The profile object from the API.
+ */
+function authStateFromProfile(profile) {
+  if (profile.userid) {
+    var parsed = parseAccountID(profile.userid);
+    var displayName = parsed.username;
+    if (profile.user_info && profile.user_info.display_name) {
+      displayName = profile.user_info.display_name;
+    }
     return {
       status: 'logged-in',
-      userid: userid,
+      displayName,
+      userid: profile.userid,
       username: parsed.username,
       provider: parsed.provider,
     };
@@ -25,8 +35,8 @@ function authStateFromUserID(userid) {
 // @ngInject
 function HypothesisAppController(
   $document, $location, $rootScope, $route, $scope,
-  $window, analytics, annotationUI, auth, bridge, drafts, features, frameSync, groups,
-  serviceUrl, session, settings, streamer
+  $window, analytics, annotationUI, auth, bridge, drafts, features,
+  flash, frameSync, groups, serviceUrl, session, settings, streamer
 ) {
   var self = this;
 
@@ -62,21 +72,17 @@ function HypothesisAppController(
 
   // Reload the view when the user switches accounts
   $scope.$on(events.USER_CHANGED, function (event, data) {
-    self.auth = authStateFromUserID(data.userid);
+    self.auth = authStateFromProfile(data.profile);
     self.accountDialog.visible = false;
-
-    if (!data || !data.initialLoad) {
-      $route.reload();
-    }
   });
 
-  session.load().then(function (state) {
+  session.load().then(function (profile) {
     // When the authentication status of the user is known,
     // update the auth info in the top bar and show the login form
     // after first install of the extension.
-    self.auth = authStateFromUserID(state.userid);
+    self.auth = authStateFromProfile(profile);
 
-    if (!state.userid && settings.openLoginForm) {
+    if (!profile.userid && settings.openLoginForm && !auth.login) {
       self.login();
     }
   });
@@ -90,16 +96,32 @@ function HypothesisAppController(
     }, 0);
   }
 
-  // Start the login flow. This will present the user with the login dialog.
+  /**
+   * Start the login flow. This will present the user with the login dialog.
+   *
+   * @return {Promise<void>} - A Promise that resolves when the login flow
+   *   completes. For non-OAuth logins, always resolves immediately.
+   */
   this.login = function () {
     if (serviceConfig(settings)) {
       // Let the host page handle the login request
       bridge.call(bridgeEvents.LOGIN_REQUESTED);
-      return;
+      return Promise.resolve();
     }
 
-    self.accountDialog.visible = true;
-    scrollToView('login-form');
+    if (auth.login) {
+      // OAuth-based login 😀
+      return auth.login().then(() => {
+        session.reload();
+      }).catch((err) => {
+        flash.error(err.message);
+      });
+    } else {
+      // Legacy cookie-based login 😔.
+      self.accountDialog.visible = true;
+      scrollToView('login-form');
+      return Promise.resolve();
+    }
   };
 
   this.signUp = function(){

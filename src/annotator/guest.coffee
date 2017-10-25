@@ -2,6 +2,7 @@ baseURI = require('document-base-uri')
 extend = require('extend')
 raf = require('raf')
 scrollIntoView = require('scroll-into-view')
+CustomEvent = require('custom-event')
 
 Delegator = require('./delegator')
 $ = require('jquery')
@@ -39,6 +40,8 @@ module.exports = class Guest extends Delegator
     ".annotator-hl click":               "onHighlightClick"
     ".annotator-hl mouseover":           "onHighlightMouseover"
     ".annotator-hl mouseout":            "onHighlightMouseout"
+    "click":                             "onElementClick"
+    "touchstart":                        "onElementTouchStart"
 
   options:
     Document: {}
@@ -51,6 +54,7 @@ module.exports = class Guest extends Delegator
   plugins: null
   anchors: null
   visibleHighlights: false
+  frameIdentifier: null
 
   html:
     adder: '<hypothesis-adder></hypothesis-adder>'
@@ -80,9 +84,12 @@ module.exports = class Guest extends Delegator
     this.plugins = {}
     this.anchors = []
 
+    # Set the frame identifier if it's available.
+    # The "top" guest instance will have this as null since it's in a top frame not a sub frame
+    this.frameIdentifier = config.subFrameIdentifier || null
+
     cfOptions =
-      enableMultiFrameSupport: config.enableMultiFrameSupport
-      embedScriptUrl: config.embedScriptUrl
+      config: config
       on: (event, handler) =>
         this.subscribe(event, handler)
       emit: (event, args...) =>
@@ -91,7 +98,7 @@ module.exports = class Guest extends Delegator
     this.addPlugin('CrossFrame', cfOptions)
     @crossframe = this.plugins.CrossFrame
 
-    @crossframe.onConnect(=> this.publish('panelReady'))
+    @crossframe.onConnect(=> this._setupInitialState(config))
     this._connectAnnotationSync(@crossframe)
     this._connectAnnotationUISync(@crossframe)
 
@@ -131,8 +138,16 @@ module.exports = class Guest extends Delegator
       link: [{href: decodeURIComponent(window.location.href)}]
     })
 
-    return Promise.all([metadataPromise, uriPromise]).then ([metadata, href]) ->
-      return {uri: normalizeURI(href, baseURI), metadata}
+    return Promise.all([metadataPromise, uriPromise]).then ([metadata, href]) =>
+      return {
+        uri: normalizeURI(href, baseURI),
+        metadata,
+        frameIdentifier: this.frameIdentifier
+      }
+
+  _setupInitialState: (config) ->
+    this.publish('panelReady')
+    this.setVisibleHighlights(config.showHighlights == 'always')
 
   _connectAnnotationSync: (crossframe) ->
     this.subscribe 'annotationDeleted', (annotation) =>
@@ -151,7 +166,14 @@ module.exports = class Guest extends Delegator
     crossframe.on 'scrollToAnnotation', (tag) =>
       for anchor in @anchors when anchor.highlights?
         if anchor.annotation.$tag is tag
-          scrollIntoView(anchor.highlights[0])
+          event = new CustomEvent('scrolltorange', {
+            bubbles: true
+            cancelable: true
+            detail: anchor.range
+          })
+          defaultNotPrevented = @element[0].dispatchEvent(event)
+          if defaultNotPrevented
+            scrollIntoView(anchor.highlights[0])
 
     crossframe.on 'getDocumentInfo', (cb) =>
       this.getDocumentInfo()
@@ -336,6 +358,7 @@ module.exports = class Guest extends Delegator
     targets.then(-> self.publish('beforeAnnotationCreated', [annotation]))
     targets.then(-> self.anchor(annotation))
 
+    @crossframe?.call('showSidebar') unless annotation.$highlight
     annotation
 
   createHighlight: ->
@@ -374,6 +397,7 @@ module.exports = class Guest extends Delegator
   showAnnotations: (annotations) ->
     tags = (a.$tag for a in annotations)
     @crossframe?.call('showAnnotations', tags)
+    @crossframe?.call('showSidebar')
 
   toggleAnnotationSelection: (annotations) ->
     tags = (a.$tag for a in annotations)
@@ -421,6 +445,19 @@ module.exports = class Guest extends Delegator
     else
       this.showAnnotations annotations
 
+  onElementClick: (event) ->
+    if !@selectedTargets?.length
+      @crossframe?.call('hideSidebar')
+
+  onElementTouchStart: (event) ->
+    # Mobile browsers do not register click events on
+    # elements without cursor: pointer. So instead of
+    # adding that to every element, we can add the initial
+    # touchstart event which is always registered to
+    # make up for the lack of click support for all elements.
+    if !@selectedTargets?.length
+      @crossframe?.call('hideSidebar')
+
   onHighlightMouseover: (event) ->
     return unless @visibleHighlights
     annotation = $(event.currentTarget).data('annotation')
@@ -451,9 +488,7 @@ module.exports = class Guest extends Delegator
 
   # Pass true to show the highlights in the frame or false to disable.
   setVisibleHighlights: (shouldShowHighlights) ->
-    @crossframe?.call('setVisibleHighlights', shouldShowHighlights)
     this.toggleHighlightClass(shouldShowHighlights)
-    this.publish 'setVisibleHighlights', shouldShowHighlights
 
   toggleHighlightClass: (shouldShowHighlights) ->
     if shouldShowHighlights

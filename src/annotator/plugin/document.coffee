@@ -1,6 +1,8 @@
 $ = require('jquery')
 Plugin = require('../plugin')
 
+baseURI = require('document-base-uri')
+
 ###
 ** Adapted from:
 ** https://github.com/openannotation/annotator/blob/v1.2.x/src/plugin/document.coffee
@@ -19,12 +21,16 @@ module.exports = class Document extends Plugin
     'beforeAnnotationCreated': 'beforeAnnotationCreated'
 
   pluginInit: ->
+    # Test seams.
+    @baseURI = @options.baseURI or baseURI
+    @document = @options.document or document
+
     this.getDocumentMetadata()
 
 # returns the primary URI for the document being annotated
 
   uri: =>
-    uri = decodeURIComponent document.location.href
+    uri = decodeURIComponent(this._getDocumentHref())
     for link in @metadata.link
       if link.rel == "canonical"
         uri = link.href
@@ -111,7 +117,7 @@ module.exports = class Document extends Plugin
 
   _getLinks: =>
 # we know our current location is a link for the document
-    @metadata.link = [href: document.location.href]
+    @metadata.link = [href: this._getDocumentHref()]
 
     # look for some relevant link relations
     for link in $("link")
@@ -157,14 +163,47 @@ module.exports = class Document extends Plugin
           if id[0..3] == "doi:"
             @metadata.link.push(href: id)
 
+    # look for a link to identify the resource in dublincore metadata
+    dcRelationValues = @metadata.dc['relation.ispartof']
+    dcIdentifierValues = @metadata.dc['identifier']
+    if dcRelationValues && dcIdentifierValues
+      dcUrnRelationComponent =
+        dcRelationValues[dcRelationValues.length - 1]
+      dcUrnIdentifierComponent =
+        dcIdentifierValues[dcIdentifierValues.length - 1]
+      dcUrn = 'urn:x-dc:' +
+        encodeURIComponent(dcUrnRelationComponent) + '/' +
+        encodeURIComponent(dcUrnIdentifierComponent)
+      @metadata.link.push(href: dcUrn)
+      # set this as the documentFingerprint as a hint to include this in search queries
+      @metadata.documentFingerprint = dcUrn
+
   _getFavicon: =>
     for link in $("link")
       if $(link).prop("rel") in ["shortcut icon", "icon"]
         @metadata["favicon"] = this._absoluteUrl(link.href)
 
-# hack to get a absolute url from a possibly relative one
-
+  # Hack to get a absolute url from a possibly relative one
   _absoluteUrl: (url) ->
-    d = document.createElement('a')
+    d = @document.createElement('a')
     d.href = url
     d.href
+
+  # Get the true URI record when it's masked via a different protocol.
+  # This happens when an href is set with a uri using the 'blob:' protocol
+  # but the document can set a different uri through a <base> tag.
+  _getDocumentHref: ->
+    href = @document.location.href
+    allowedSchemes = ['http:', 'https:', 'file:']
+
+    # Use the current document location if it has a recognized scheme.
+    if new URL(href).protocol in allowedSchemes
+      return href
+
+    # Otherwise, try using the location specified by the <base> element.
+    if @baseURI and (new URL(@baseURI).protocol in allowedSchemes)
+      return @baseURI
+
+    # Fall back to returning the document URI, even though the scheme is not
+    # in the allowed list.
+    return href

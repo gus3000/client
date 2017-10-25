@@ -5,7 +5,8 @@ Hammer = require('hammerjs')
 Host = require('./host')
 annotationCounts = require('./annotation-counts')
 sidebarTrigger = require('./sidebar-trigger')
-events = require('../shared/bridge-events');
+events = require('../shared/bridge-events')
+features = require('./features')
 
 # Minimum width to which the frame can be resized.
 MIN_RESIZE = 280
@@ -34,6 +35,7 @@ module.exports = class Sidebar extends Host
       @plugins.BucketBar.element.on 'click', (event) => this.show()
 
     if @plugins.Toolbar?
+      @toolbarWidth = parseInt(window.getComputedStyle(this.plugins.Toolbar.toolbar[0]).width)
       this._setupGestures()
 
     # The partner-provided callback functions.
@@ -45,51 +47,40 @@ module.exports = class Sidebar extends Host
       @onProfileRequest = serviceConfig.onProfileRequest
       @onHelpRequest = serviceConfig.onHelpRequest
 
+    @onLayoutChange = config.onLayoutChange
+
+    # initial layout notification
+    this._notifyOfLayoutChange(false)
+
     this._setupSidebarEvents()
-    this._setupDocumentEvents()
-
-  _setupDocumentEvents: ->
-    sidebarTrigger(document.body, => this.show())
-
-    @element.on 'click', (event) =>
-      if !@selectedTargets?.length
-        this.hide()
-
-    # Mobile browsers do not register click events on
-    # elements without cursor: pointer. So instead of
-    # adding that to every element, we can add the initial
-    # touchstart event which is always registered to
-    # make up for the lack of click support for all elements.
-    @element.on 'touchstart', (event) =>
-      if !@selectedTargets?.length
-        this.hide()
-
-    return this
 
   _setupSidebarEvents: ->
     annotationCounts(document.body, @crossframe)
+    sidebarTrigger(document.body, => this.show())
+    features.init(@crossframe)
 
+    @crossframe.on('showSidebar', => this.show())
+    @crossframe.on('hideSidebar', => this.hide())
     @crossframe.on(events.LOGIN_REQUESTED, =>
       if @onLoginRequest
         @onLoginRequest()
-    );
+    )
     @crossframe.on(events.LOGOUT_REQUESTED, =>
       if @onLogoutRequest
         @onLogoutRequest()
-    );
+    )
     @crossframe.on(events.SIGNUP_REQUESTED, =>
       if @onSignupRequest
         @onSignupRequest()
-    );
+    )
     @crossframe.on(events.PROFILE_REQUESTED, =>
       if @onProfileRequest
         @onProfileRequest()
-    );
+    )
     @crossframe.on(events.HELP_REQUESTED, =>
       if @onHelpRequest
         @onHelpRequest()
-    );
-
+    )
     # Return this for chaining
     this
 
@@ -135,6 +126,62 @@ module.exports = class Sidebar extends Host
         w = -m
         @frame.css('margin-left', "#{m}px")
         if w >= MIN_RESIZE then @frame.css('width', "#{w}px")
+        this._notifyOfLayoutChange()
+
+  ###*
+  # Notify integrator when sidebar layout changes via `onLayoutChange` callback.
+  #
+  # @param [boolean] explicitExpandedState - `true` or `false` if the sidebar
+  #   is being directly opened or closed, as opposed to being resized via
+  #   the sidebar's drag handles.
+  ###
+  _notifyOfLayoutChange: (explicitExpandedState) =>
+    toolbarWidth = @toolbarWidth || 0
+
+    # The sidebar structure is:
+    #
+    # [ Toolbar    ][                                   ]
+    # [ ---------- ][ Sidebar iframe container (@frame) ]
+    # [ Bucket Bar ][                                   ]
+    #
+    # The sidebar iframe is hidden or shown by adjusting the left margin of its
+    # container.
+
+    if @onLayoutChange
+      rect = @frame[0].getBoundingClientRect()
+      computedStyle = window.getComputedStyle(@frame[0])
+      width = parseInt(computedStyle.width)
+      leftMargin = parseInt(computedStyle.marginLeft)
+
+      # The width of the sidebar that is visible on screen, including the
+      # toolbar, which is always visible.
+      frameVisibleWidth = toolbarWidth
+
+      if explicitExpandedState?
+        # When we are explicitly saying to open or close, jump
+        # straight to the upper and lower bounding widths.
+        if explicitExpandedState
+          frameVisibleWidth += width
+      else
+        if leftMargin < MIN_RESIZE
+          # When the width hits its threshold of MIN_RESIZE,
+          # the left margin continues to push the sidebar off screen.
+          # So it's the best indicator of width when we get below that threshold.
+          # Note: when we hit the right edge, it will be -0
+          frameVisibleWidth += -leftMargin
+        else
+          frameVisibleWidth += width
+
+      # Since we have added logic on if this is an explicit show/hide
+      # and applied proper width to the visible value above, we can infer
+      # expanded state on that width value vs the lower bound
+      expanded = frameVisibleWidth > toolbarWidth
+
+      @onLayoutChange({
+        expanded: expanded,
+        width: if expanded then frameVisibleWidth else toolbarWidth,
+        height: rect.height,
+      })
 
   onPan: (event) =>
     switch event.type
@@ -191,6 +238,8 @@ module.exports = class Sidebar extends Host
     if @options.showHighlights == 'whenSidebarOpen'
       @setVisibleHighlights(true)
 
+    this._notifyOfLayoutChange(true)
+
   hide: ->
     @frame.css 'margin-left': ''
     @frame.addClass 'annotator-collapsed'
@@ -203,13 +252,13 @@ module.exports = class Sidebar extends Host
     if @options.showHighlights == 'whenSidebarOpen'
       @setVisibleHighlights(false)
 
+    this._notifyOfLayoutChange(false)
+
   isOpen: ->
     !@frame.hasClass('annotator-collapsed')
 
-  createAnnotation: (annotation = {}) ->
-    super
-    this.show() unless annotation.$highlight
+  setAllVisibleHighlights: (shouldShowHighlights) ->
+    @crossframe.call('setVisibleHighlights', shouldShowHighlights)
 
-  showAnnotations: (annotations) ->
-    super
-    this.show()
+    # Let the Toolbar know about this event
+    this.publish 'setVisibleHighlights', shouldShowHighlights

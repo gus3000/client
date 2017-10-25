@@ -37,8 +37,7 @@ var pluginClasses = {
   CrossFrame: require('./plugin/cross-frame'),
 };
 
-var appLinkEl =
-  document.querySelector('link[type="application/annotator+html"]');
+var appLinkEl = document.querySelector('link[type="application/annotator+html"][rel="sidebar"]');
 var config = configFrom(window);
 
 $.noConflict(true)(function() {
@@ -51,7 +50,7 @@ $.noConflict(true)(function() {
     delete config.constructor;
   }
 
-  if (config.enableMultiFrameSupport && config.subFrameInstance) {
+  if (config.subFrameIdentifier) {
     Klass = Guest;
 
     // Other modules use this to detect if this
@@ -62,10 +61,9 @@ $.noConflict(true)(function() {
 
   config.pluginClasses = pluginClasses;
 
-  window.annotator = new Klass(document.body, config);
+  var annotator = new Klass(document.body, config);
   appLinkEl.addEventListener('destroy', function () {
     appLinkEl.parentElement.removeChild(appLinkEl);
-    window.annotator.destroy();
-    window.annotator = undefined;
+    annotator.destroy();
   });
 });

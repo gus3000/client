@@ -124,6 +124,8 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
       $rootScope.$broadcast(events.BEFORE_ANNOTATION_CREATED, annot);
     });
 
+    bridge.on('destroyFrame', destroyFrame.bind(this));
+
     // Anchoring an annotation in the frame completed
     bridge.on('sync', function (events_) {
       events_.forEach(function (event) {
@@ -149,6 +151,18 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
     bridge.on('sidebarOpened', function () {
       $rootScope.$broadcast('sidebarOpened');
     });
+
+    // These invoke the matching methods by name on the Guests
+    bridge.on('showSidebar', function () {
+      bridge.call('showSidebar');
+    });
+    bridge.on('hideSidebar', function () {
+      bridge.call('hideSidebar');
+    });
+    bridge.on('setVisibleHighlights', function (state) {
+      bridge.call('setVisibleHighlights', state);
+    });
+
   }
 
   /**
@@ -163,11 +177,24 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
         return;
       }
 
+      $rootScope.$broadcast(events.FRAME_CONNECTED);
+
       annotationUI.connectFrame({
+        id: info.frameIdentifier,
         metadata: info.metadata,
         uri: info.uri,
       });
     });
+  }
+
+  function destroyFrame(frameIdentifier) {
+    var frames = annotationUI.frames();
+    var frameToDestroy = frames.find(function (frame) {
+      return frame.id === frameIdentifier;
+    });
+    if (frameToDestroy) {
+      annotationUI.destroyFrame(frameToDestroy);
+    }
   }
 
   /**

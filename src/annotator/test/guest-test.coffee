@@ -58,6 +58,8 @@ describe 'Guest', ->
     return new Guest(element, config)
 
   beforeEach ->
+    sinon.stub(console, 'warn')
+
     FakeAdder::instance = null
     rangeUtil = {
       isSelectionBackwards: sinon.stub()
@@ -84,6 +86,7 @@ describe 'Guest', ->
     fakeCrossFrame = {
       onConnect: sinon.stub()
       on: sinon.stub()
+      call: sinon.stub()
       sync: sinon.stub()
       destroy: sinon.stub()
     }
@@ -93,6 +96,7 @@ describe 'Guest', ->
 
   afterEach ->
     sandbox.restore()
+    console.warn.restore()
 
   describe 'plugins', ->
     fakePlugin = null
@@ -234,11 +238,41 @@ describe 'Guest', ->
         assert.called(scrollIntoView)
         assert.calledWith(scrollIntoView, highlight[0])
 
+      context 'when dispatching the "scrolltorange" event', ->
+
+        it 'emits with the range', ->
+          highlight = $('<span></span>')
+          guest = createGuest()
+          fakeRange = sinon.stub()
+          guest.anchors = [
+            {annotation: {$tag: 'tag1'}, highlights: highlight.toArray(), range: fakeRange}
+          ]
+
+          return new Promise (resolve) ->
+            guest.element.on 'scrolltorange', (event) ->
+              assert.equal(event.detail, fakeRange)
+              resolve()
+
+            emitGuestEvent('scrollToAnnotation', 'tag1')
+
+        it 'allows the default scroll behaviour to be prevented', ->
+          highlight = $('<span></span>')
+          guest = createGuest()
+          fakeRange = sinon.stub()
+          guest.anchors = [
+            {annotation: {$tag: 'tag1'}, highlights: highlight.toArray(), range: fakeRange}
+          ]
+
+          guest.element.on 'scrolltorange', (event) -> event.preventDefault()
+          emitGuestEvent('scrollToAnnotation', 'tag1')
+          assert.notCalled(scrollIntoView)
+
+
     describe 'on "getDocumentInfo" event', ->
       guest = null
 
       beforeEach ->
-        sandbox.stub(document, 'title', 'hi')
+        document.title = 'hi'
         guest = createGuest()
         guest.plugins.PDF =
           uri: sandbox.stub().returns(window.location.href)
@@ -276,6 +310,24 @@ describe 'Guest', ->
         guest.plugins.PDF.getMetadata.returns(promise)
 
         emitGuestEvent('getDocumentInfo', assertComplete)
+
+  describe 'document events', ->
+
+    guest = null
+
+    beforeEach ->
+      guest = createGuest()
+
+    it 'emits "hideSidebar" on cross frame when the user taps or clicks in the page', ->
+      methods =
+        'click': 'onElementClick'
+        'touchstart': 'onElementTouchStart'
+
+      for event in ['click', 'touchstart']
+        sandbox.spy(guest, methods[event])
+        guest.element.trigger(event)
+        assert.called(guest[methods[event]])
+        assert.calledWith(guest.plugins.CrossFrame.call, 'hideSidebar')
 
   describe 'when the selection changes', ->
     it 'shows the adder if the selection contains text', ->

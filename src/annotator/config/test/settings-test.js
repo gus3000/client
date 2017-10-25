@@ -29,10 +29,11 @@ describe('annotator.config.settingsFrom', function() {
     fakeSharedSettings.jsonConfigsFrom = sinon.stub().returns({});
   });
 
-  describe('#app', function() {
-    function appendLinkToDocument(href) {
+  describe('#sidebarAppUrl', function() {
+    function appendSidebarLinkToDocument(href) {
       var link = document.createElement('link');
       link.type = 'application/annotator+html';
+      link.rel = 'sidebar';
       if (href) {
         link.href = href;
       }
@@ -44,7 +45,7 @@ describe('annotator.config.settingsFrom', function() {
       var link;
 
       beforeEach('add an application/annotator+html <link>', function() {
-        link = appendLinkToDocument('http://example.com/app.html');
+        link = appendSidebarLinkToDocument('http://example.com/app.html');
       });
 
       afterEach('tidy up the link', function() {
@@ -52,7 +53,7 @@ describe('annotator.config.settingsFrom', function() {
       });
 
       it('returns the href from the link', function() {
-        assert.equal(settingsFrom(window).app, 'http://example.com/app.html');
+        assert.equal(settingsFrom(window).sidebarAppUrl, 'http://example.com/app.html');
       });
     });
 
@@ -61,8 +62,8 @@ describe('annotator.config.settingsFrom', function() {
       var link2;
 
       beforeEach('add two links to the document', function() {
-        link1 = appendLinkToDocument('http://example.com/app1');
-        link2 = appendLinkToDocument('http://example.com/app2');
+        link1 = appendSidebarLinkToDocument('http://example.com/app1');
+        link2 = appendSidebarLinkToDocument('http://example.com/app2');
       });
 
       afterEach('tidy up the links', function() {
@@ -71,7 +72,7 @@ describe('annotator.config.settingsFrom', function() {
       });
 
       it('returns the href from the first one', function() {
-        assert.equal(settingsFrom(window).app, 'http://example.com/app1');
+        assert.equal(settingsFrom(window).sidebarAppUrl, 'http://example.com/app1');
       });
     });
 
@@ -79,7 +80,7 @@ describe('annotator.config.settingsFrom', function() {
       var link;
 
       beforeEach('add an application/annotator+html <link> with no href', function() {
-        link = appendLinkToDocument();
+        link = appendSidebarLinkToDocument();
       });
 
       afterEach('tidy up the link', function() {
@@ -89,9 +90,9 @@ describe('annotator.config.settingsFrom', function() {
       it('throws an error', function() {
         assert.throws(
           function() {
-            settingsFrom(window).app; // eslint-disable-line no-unused-expressions
+            settingsFrom(window).sidebarAppUrl; // eslint-disable-line no-unused-expressions
           },
-          'application/annotator+html link has no href'
+          'application/annotator+html (rel="sidebar") link has no href'
         );
       });
     });
@@ -100,9 +101,89 @@ describe('annotator.config.settingsFrom', function() {
       it('throws an error', function() {
         assert.throws(
           function() {
-            settingsFrom(window).app; // eslint-disable-line no-unused-expressions
+            settingsFrom(window).sidebarAppUrl; // eslint-disable-line no-unused-expressions
           },
-          'No application/annotator+html link in the document'
+          'No application/annotator+html (rel="sidebar") link in the document'
+        );
+      });
+    });
+  });
+
+  describe('#clientUrl', function() {
+    function appendClientUrlLinkToDocument(href) {
+      var link = document.createElement('link');
+      link.type = 'application/annotator+javascript';
+      link.rel = 'hypothesis-client';
+      if (href) {
+        link.href = href;
+      }
+      document.head.appendChild(link);
+      return link;
+    }
+
+    context("when there's an application/annotator+javascript link", function() {
+      var link;
+
+      beforeEach('add an application/annotator+javascript <link>', function() {
+        link = appendClientUrlLinkToDocument('http://example.com/app.html');
+      });
+
+      afterEach('tidy up the link', function() {
+        document.head.removeChild(link);
+      });
+
+      it('returns the href from the link', function() {
+        assert.equal(settingsFrom(window).clientUrl, 'http://example.com/app.html');
+      });
+    });
+
+    context('when there are multiple annotator+javascript links', function() {
+      var link1;
+      var link2;
+
+      beforeEach('add two links to the document', function() {
+        link1 = appendClientUrlLinkToDocument('http://example.com/app1');
+        link2 = appendClientUrlLinkToDocument('http://example.com/app2');
+      });
+
+      afterEach('tidy up the links', function() {
+        document.head.removeChild(link1);
+        document.head.removeChild(link2);
+      });
+
+      it('returns the href from the first one', function() {
+        assert.equal(settingsFrom(window).clientUrl, 'http://example.com/app1');
+      });
+    });
+
+    context('when the annotator+javascript link has no href', function() {
+      var link;
+
+      beforeEach('add an application/annotator+javascript <link> with no href', function() {
+        link = appendClientUrlLinkToDocument();
+      });
+
+      afterEach('tidy up the link', function() {
+        document.head.removeChild(link);
+      });
+
+      it('throws an error', function() {
+        assert.throws(
+          function() {
+            settingsFrom(window).clientUrl; // eslint-disable-line no-unused-expressions
+          },
+          'application/annotator+javascript (rel="hypothesis-client") link has no href'
+        );
+      });
+    });
+
+    context("when there's no annotator+javascript link", function() {
+      it('throws an error', function() {
+        assert.throws(
+          function() {
+            settingsFrom(window).clientUrl; // eslint-disable-line no-unused-expressions
+          },
+          'No application/annotator+javascript (rel="hypothesis-client") link in the document'
         );
       });
     });
@@ -220,8 +301,8 @@ describe('annotator.config.settingsFrom', function() {
       {
         describe: 'when the query contains URI escape sequences',
         it: 'decodes the escape sequences',
-        url: 'http://localhost:3000#annotations:query:foo%20bar',
-        returns: 'foo bar',
+        url: 'http://localhost:3000#annotations:query:user%3Ajsmith%20bar',
+        returns: 'user:jsmith bar',
       },
       {
         describe: "when there's an unrecognised URL fragment",
@@ -245,21 +326,12 @@ describe('annotator.config.settingsFrom', function() {
     });
 
     describe('when the URL contains an invalid fragment', function() {
-      var decodeURI;
-
-      beforeEach('make decodeURI throw an error', function() {
-        decodeURI = sinon.stub(window, 'decodeURI').throws();
-      });
-
-      afterEach('reset decodeURI', function() {
-        decodeURI.reset();
-      });
-
       it('returns null', function() {
-        // Note: we need a #annotations:query:* fragment here, not just a
-        // #annotations:* one or an unrecognised one, otherwise
-        // query() won't try to URI-decode the fragment.
-        var url = 'http://localhost:3000#annotations:query:abc123';
+        // An invalid escape sequence which will cause decodeURIComponent() to
+        // throw a URIError.
+        var invalidFrag = '%aaaaa';
+
+        var url = 'http://localhost:3000#annotations:query:' + invalidFrag;
 
         assert.isNull(settingsFrom(fakeWindow(url)).query);
       });
