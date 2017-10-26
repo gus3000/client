@@ -564,57 +564,6 @@ function AnnotationController(
     };
 
     this.getCatColor = function (tag) {
-	let categories = [ //TODO clean
-	    {
-		name: "Important",
-		color: "#0f75f1"
-	    },
-	    {
-		name: "Mot-clef",
-		color: "#db3498"
-	    },
-	    {
-		name: "Commentaire",
-		color: "#2ecc71"
-	    },
-	    {
-		name: "Appel:expertise",
-		color: "#007533"
-	    },
-	    {
-		name: "Appel:discussion",
-		color: "#007533"
-	    },
-	];
-
-	let tagName = tag.substring(4);
-	//console.log("tagName = " + tagName);
-	for(var i=0; i<categories.length; i++)
-	{
-	    if(tagName == categories[i].name)
-	    {
-		return categories[i].color;
-	    }
-	}
-	return "";
-    };
-
-  init();
-}
-
-module.exports = {
-  controller: AnnotationController,
-  controllerAs: 'vm',
-  bindings: {
-    annotation: '<',
-    showDocumentInfo: '<',
-    onReplyCountClick: '&',
-    replyCount: '<',
-    isCollapsed: '<',
-    getCatColor: '<'
-  },
-  template: require('../templates/annotation.html'),
-
-  // Private helper exposed for use in unit tests.
+ // Private helper exposed for use in unit tests.
   updateModel: updateModel,
 };

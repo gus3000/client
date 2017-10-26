@@ -7,6 +7,8 @@ module.exports = {
 	this.catIndex = 0; //TODO use dropdown
 	//this.dropdownMenuLabel = ['A','B','C','D'];
 
+	//this.categories = require('categories');
+	//*
 	this.categories = [
 	    {
 		name: "Important",
@@ -28,7 +30,7 @@ module.exports = {
 		name: "Appel:discussion",
 		color: "#007533"
 	    },
-	];
+	]; //*/
 
 	this.onClick = function () {
 	    this.catIndex++;
