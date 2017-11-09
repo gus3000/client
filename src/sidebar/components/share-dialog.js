@@ -3,7 +3,7 @@
 var VIA_PREFIX = 'https://via.hypothes.is/';
 
 // @ngInject
-function ShareDialogController($scope, $element, analytics, annotationUI) {
+function ShareDialogController($scope, $element, analytics, annotationUI, settings) {
   var self = this;
 
   function updateViaLink(frames) {
@@ -12,11 +12,13 @@ function ShareDialogController($scope, $element, analytics, annotationUI) {
       return;
     }
 
+    var viaPrefix = settings.viaUrl || VIA_PREFIX;
+
     // Check to see if we are on a via page. If so, we just return the URI.
-    if (frames[0].uri.indexOf(VIA_PREFIX) === 0) {
+    if (frames[0].uri.indexOf(viaPrefix) === 0) {
       self.viaPageLink = frames[0].uri;
     } else {
-      self.viaPageLink = VIA_PREFIX + frames[0].uri;
+      self.viaPageLink = viaPrefix + frames[0].uri;
     }
   }
 
