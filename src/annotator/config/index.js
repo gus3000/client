@@ -31,6 +31,7 @@ function configFrom(window_) {
     // by a top level client
     subFrameIdentifier: settings.hostPageSetting('subFrameIdentifier', {allowInBrowserExt: true}),
     viaUrl: settings.hostPageSetting('viaUrl'),
+    annotationProtocol: settings.hostPageSetting('annotationProtocol'),
   };
 }
 
