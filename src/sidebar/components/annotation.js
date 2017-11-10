@@ -560,16 +560,16 @@ function AnnotationController(
   };
 
   this.isCategory = function (tag) {
-    return tag.startsWith("cat:");
+    return tag.startsWith('cat:');
   };
 
   this.getCatColor = function (tag) {
     let categories = settings.annotationProtocol;
 
-    let tagName = tag.substring(4);
+    let tagName = tag.substring(4).toLowerCase();
     //console.log("tagName = " + tagName);
     for (var i = 0; i < categories.length; i++) {
-      if (tagName == categories[i].name) {
+      if (tagName == categories[i].name.toLowerCase()) {
         return categories[i].color;
       }
     }
