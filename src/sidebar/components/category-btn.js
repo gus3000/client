@@ -12,7 +12,6 @@ module.exports = {
 
     this.onClick = function () {
       this.catIndex++;
-      console.log('category-btn click');
     };
 
     this.getCategory = function () {
@@ -47,6 +46,20 @@ module.exports = {
     this.getColor = function () {
       return this.category.color;
     };
+
+    this.toggleShowDropDown = function () {
+      this.showDropdown = ! this.showDropdown;
+    };
+
+    // push back the container to the background when not shown
+    this.getDropdownContainerStyle = function() {
+      if(!this.showDropdown) {
+        return {'z-index': -1};
+      } else {
+        return {};
+      }
+    };
+
   },
   controllerAs: 'vm',
   bindings: {
