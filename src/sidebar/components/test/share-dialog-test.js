@@ -7,6 +7,7 @@ var util = require('../../directive/test/util');
 describe('shareDialog', function () {
   var fakeAnalytics;
   var fakeAnnotationUI;
+  var fakeSettings;
 
   beforeEach(function () {
     fakeAnalytics = {
@@ -14,11 +15,16 @@ describe('shareDialog', function () {
       events: {},
     };
     fakeAnnotationUI = { frames: sinon.stub().returns([]) };
+    fakeSettings = {
+      // "localhost" is the host used by 'first party' annotation fixtures
+      authDomain: 'localhost',
+    };
 
     angular.module('h', [])
       .component('shareDialog', require('../share-dialog'))
       .value('analytics', fakeAnalytics)
       .value('annotationUI', fakeAnnotationUI)
+      .value('settings', fakeSettings)
       .value('urlEncodeFilter', function (val) { return val; });
     angular.mock.module('h');
   });
@@ -29,6 +35,15 @@ describe('shareDialog', function () {
     element.scope.$digest();
     assert.equal(element.ctrl.viaPageLink, 'https://via.hypothes.is/http://example.com');
   });
+
+  it('generates new via link with alternative via url', function () {
+    fakeSettings.viaUrl = 'https://via.hypothesis.local/';
+    var element = util.createDirective(document, 'shareDialog', {});
+    fakeAnnotationUI.frames.returns([{ uri: 'http://example.com' }]);
+    element.scope.$digest();
+    assert.equal(element.ctrl.viaPageLink, 'https://via.hypothesis.local/http://example.com');
+  });
+
 
   it('does not generate new via link if already on via', function () {
     var element = util.createDirective(document, 'shareDialog', {});
