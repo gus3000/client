@@ -23,6 +23,7 @@ var links = require('./links');
 var selection = require('./selection');
 var session = require('./session');
 var viewer = require('./viewer');
+var annotationProtocol = require('./annotationProtocol');
 var util = require('./util');
 
 function init(settings) {
@@ -33,7 +34,8 @@ function init(settings) {
     links.init(),
     selection.init(settings),
     session.init(),
-    viewer.init()
+    viewer.init(),
+    annotationProtocol.init(settings)
   );
 }
 
@@ -43,7 +45,8 @@ var update = util.createReducer(Object.assign(
   links.update,
   selection.update,
   session.update,
-  viewer.update
+  viewer.update,
+  annotationProtocol.update
 ));
 
 module.exports = {

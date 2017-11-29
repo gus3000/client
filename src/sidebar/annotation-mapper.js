@@ -18,6 +18,7 @@ function annotationMapper($rootScope, annotationUI, store) {
 
     var loaded = [];
     annotations.forEach(function (annotation) {
+      console.log("LOAD ANNOTATIONS MAPPER", annotation);
       var existing = getExistingAnnotation(annotationUI, annotation.id);
       if (existing) {
         $rootScope.$broadcast(events.ANNOTATION_UPDATED, annotation);

@@ -62,6 +62,7 @@ module.exports = class Guest extends Delegator
   constructor: (element, config) ->
     super
 
+    console.log("GUEST CONSTRUCTOR config", config, element)
     this.adder = $(this.html.adder).appendTo(@element).hide()
 
     self = this
@@ -101,6 +102,7 @@ module.exports = class Guest extends Delegator
     @crossframe.onConnect(=> this._setupInitialState(config))
     this._connectAnnotationSync(@crossframe)
     this._connectAnnotationUISync(@crossframe)
+    this._connectAnnotationProtocolSync(@crossframe)
 
     # Load plugins
     for own name, opts of @options
@@ -145,6 +147,7 @@ module.exports = class Guest extends Delegator
         frameIdentifier: this.frameIdentifier
       }
 
+
   _setupInitialState: (config) ->
     this.publish('panelReady')
     this.setVisibleHighlights(config.showHighlights == 'always')
@@ -155,7 +158,12 @@ module.exports = class Guest extends Delegator
 
     this.subscribe 'annotationsLoaded', (annotations) =>
       for annotation in annotations
+        console.log("ANNOTATION RECEIVED", annotation)
         this.anchor(annotation)
+    this.subscribe 'annotationsUpdated', (annotations) =>
+      for annotation in annotations
+        console.log("ANNOTATION UPDATED RECEIVED", annotation)
+        this.updateCategories(annotation)
 
   _connectAnnotationUISync: (crossframe) ->
     crossframe.on 'focusAnnotations', (tags=[]) =>
@@ -182,6 +190,15 @@ module.exports = class Guest extends Delegator
 
     crossframe.on 'setVisibleHighlights', (state) =>
       this.setVisibleHighlights(state)
+
+  _connectAnnotationProtocolSync: (crossframe) ->
+    this.subscribe 'annotationProtocolLoaded', (annotationProtocol) =>
+      this.setAnnotationProtocol(annotationProtocol)
+
+  _getHighlightClass: (annotation) ->
+    (annotation.categories || []).reduce((classStr, cat) ->
+        "#{classStr} annotator-hl-#{cat}"
+      , 'annotator-hl')
 
   destroy: ->
     $('#annotator-dynamic-style').remove()
@@ -244,11 +261,13 @@ module.exports = class Guest extends Delegator
 
     highlight = (anchor) ->
       # Highlight the range for an anchor.
+      console.log("GUEST HIGHLIGHT", anchor)
       return anchor unless anchor.range?
       return animationPromise ->
         range = xpathRange.sniff(anchor.range)
         normedRange = range.normalize(root)
-        highlights = highlighter.highlightRange(normedRange)
+        highlightClass = self._getHighlightClass(anchor.annotation)
+        highlights = highlighter.highlightRange(normedRange, highlightClass)
 
         $(highlights).data('annotation', anchor.annotation)
         anchor.highlights = highlights
@@ -323,6 +342,13 @@ module.exports = class Guest extends Delegator
     raf =>
       highlighter.removeHighlights(unhighlight)
       this.plugins.BucketBar?.update()
+
+  updateCategories: (annotation) ->
+    for anchor in @anchors when anchor.highlights?
+      if anchor.annotation.$tag == annotation.$tag
+        anchor.annotation.categories = annotation.categories
+        highlightClass = this._getHighlightClass(anchor.annotation)
+        $(anchor.highlights).removeClass().addClass(highlightClass)
 
   createAnnotation: (annotation = {}) ->
     self = this
@@ -497,3 +523,17 @@ module.exports = class Guest extends Delegator
       @element.removeClass(SHOW_HIGHLIGHTS_CLASS)
 
     @visibleHighlights = shouldShowHighlights
+
+  setAnnotationProtocol: (annotationProtocol) ->
+    console.log("GUEST SET ANNOTATION PROTOCOL", annotationProtocol, @element)
+    $('#annotator-dynamic-style').remove()
+    cssStr = Object.keys(annotationProtocol).reduce (previousCss, key) ->
+      "#{previousCss}\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}37 ; }" +
+      "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}ab ; }" +
+      "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} .annotator-hl-#{key} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}ff ; }"
+    , ""
+    console.log("GUEST SET ANNOTATION PROTOCOL CSS", cssStr)
+    styleNode = $("<style/>", { id: "annotator-dynamic-style"})
+    styleNode.text(cssStr)
+    @element.append(styleNode)
+

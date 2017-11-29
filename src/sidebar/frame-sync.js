@@ -23,14 +23,32 @@ var uiConstants = require('./ui-constants');
   * within the current session and anchor it in the document.
   */
 function formatAnnot(ann) {
-  return {
+  const res = {
     tag: ann.$tag,
     msg: {
       document: ann.document,
       target: ann.target,
       uri: ann.uri,
+      categories: ann.categories || [],
     },
   };
+  console.log("FORMAT ANNOTATION", ann, res);
+  return res;
+}
+
+/**
+ * return a minimal representation of an annotation protocol that can be sent
+ * from the sidebar app to ta connected frame.
+ *
+ * The connected frame is expected to fully replace the declared protocol each time.
+ *
+ * @param {*} prot The protocol object
+ */
+function formatProtocol(prot) {
+  return Object.keys(prot).reduce(function(previous, key) {
+    previous[key] = prot[key].color;
+    return previous;
+  }, {});
 }
 
 /**
@@ -42,7 +60,8 @@ function formatAnnot(ann) {
 function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
 
   // Set of tags of annotations that are currently loaded into the frame
-  var inFrame = new Set();
+  // var inFrame = new Set();
+  var inFrame = {};
 
   /**
    * Watch for changes to the set of annotations displayed in the sidebar and
@@ -52,18 +71,21 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
     // List of loaded annotations in previous state
     var prevAnnotations = [];
     var prevFrames = [];
+    var prevAnnotationProtocol = {};
     var prevPublicAnns = 0;
 
     annotationUI.subscribe(function () {
       var state = annotationUI.getState();
       if (state.annotations === prevAnnotations &&
-          state.frames === prevFrames) {
+          state.frames === prevFrames &&
+          state.annotationProtocol === prevAnnotationProtocol) {
         return;
       }
-
+      console.log("ANNOTATION UI SUBSCRIBE", state);
       var publicAnns = 0;
       var inSidebar = new Set();
       var added = [];
+      var updated = [];
 
       state.annotations.forEach(function (annot) {
         if (metadata.isReply(annot)) {
@@ -76,8 +98,10 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
         }
 
         inSidebar.add(annot.$tag);
-        if (!inFrame.has(annot.$tag)) {
+        if (! (annot.$tag in inFrame)) {
           added.push(annot);
+        } else if (inFrame[annot.$tag] !== annot.categories) {
+          updated.push(annot);
         }
       });
       var deleted = prevAnnotations.filter(function (annot) {
@@ -92,12 +116,19 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
       if (added.length > 0) {
         bridge.call('loadAnnotations', added.map(formatAnnot));
         added.forEach(function (annot) {
-          inFrame.add(annot.$tag);
+          inFrame[annot.$tag] = annot.categories;
+          //inFrame.add(annot.$tag);
+        });
+      }
+      if (updated.length > 0) {
+        bridge.call('updateAnnotations', updated.map(formatAnnot));
+        updated.forEach(function (annot) {
+          inFrame[annot.$tag] = annot.categories;
         });
       }
       deleted.forEach(function (annot) {
         bridge.call('deleteAnnotation', formatAnnot(annot));
-        inFrame.delete(annot.$tag);
+        delete inFrame[annot.$tag];
       });
 
       var frames = annotationUI.frames();
@@ -109,6 +140,12 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
           }
         }
       }
+
+      if(prevAnnotationProtocol !== state.annotationProtocol) {
+        prevAnnotationProtocol = state.annotationProtocol;
+        bridge.call('loadAnnotationProtocol', formatProtocol(state.annotationProtocol));
+      }
+
     });
   }
 
@@ -119,7 +156,8 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
   function setupSyncFromFrame() {
     // A new annotation, note or highlight was created in the frame
     bridge.on('beforeCreateAnnotation', function (event) {
-      inFrame.add(event.tag);
+      //inFrame.add(event.tag);
+      inFrame[event.tag] = [];
       var annot = Object.assign({}, event.msg, {$tag: event.tag});
       $rootScope.$broadcast(events.BEFORE_ANNOTATION_CREATED, annot);
     });
@@ -129,7 +167,10 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
     // Anchoring an annotation in the frame completed
     bridge.on('sync', function (events_) {
       events_.forEach(function (event) {
-        inFrame.add(event.tag);
+        if(! (event.tag in inFrame)) {
+          inFrame[event.tag] = [];
+        }
+        //inFrame.add(event.tag);
         annotationUI.updateAnchorStatus(null, event.tag, event.msg.$orphan);
         $rootScope.$broadcast(events.ANNOTATIONS_SYNCED, [event.tag]);
       });
