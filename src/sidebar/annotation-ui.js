@@ -38,6 +38,7 @@ var thunk = require('redux-thunk').default;
 
 var reducers = require('./reducers');
 var annotationsReducer = require('./reducers/annotations');
+var annotationProtocolReducer = require('./reducers/annotationProtocol');
 var framesReducer = require('./reducers/frames');
 var linksReducer = require('./reducers/links');
 var selectionReducer = require('./reducers/selection');
@@ -124,6 +125,7 @@ module.exports = function ($rootScope, settings) {
 
     isFeatureEnabled: sessionReducer.isFeatureEnabled,
     profile: sessionReducer.profile,
+    sortedProtocolList: annotationProtocolReducer.sortedProtocolList,
   }, store.getState);
 
   return Object.assign(store, actionCreators, selectors);

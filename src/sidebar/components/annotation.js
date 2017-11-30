@@ -567,7 +567,7 @@ function AnnotationController(
     let categories = settings.annotationProtocol;
 
     let tagName = tag.substring(4).toLowerCase();
-    //console.log("tagName = " + tagName);
+
     for (var i = 0; i < categories.length; i++) {
       if (tagName == categories[i].name.toLowerCase()) {
         return categories[i].color;

@@ -3,6 +3,7 @@ extend = require('extend')
 raf = require('raf')
 scrollIntoView = require('scroll-into-view')
 CustomEvent = require('custom-event')
+colorConvert = require('color-convert')
 
 Delegator = require('./delegator')
 $ = require('jquery')
@@ -62,7 +63,6 @@ module.exports = class Guest extends Delegator
   constructor: (element, config) ->
     super
 
-    console.log("GUEST CONSTRUCTOR config", config, element)
     this.adder = $(this.html.adder).appendTo(@element).hide()
 
     self = this
@@ -158,11 +158,9 @@ module.exports = class Guest extends Delegator
 
     this.subscribe 'annotationsLoaded', (annotations) =>
       for annotation in annotations
-        console.log("ANNOTATION RECEIVED", annotation)
         this.anchor(annotation)
     this.subscribe 'annotationsUpdated', (annotations) =>
       for annotation in annotations
-        console.log("ANNOTATION UPDATED RECEIVED", annotation)
         this.updateCategories(annotation)
 
   _connectAnnotationUISync: (crossframe) ->
@@ -261,7 +259,6 @@ module.exports = class Guest extends Delegator
 
     highlight = (anchor) ->
       # Highlight the range for an anchor.
-      console.log("GUEST HIGHLIGHT", anchor)
       return anchor unless anchor.range?
       return animationPromise ->
         range = xpathRange.sniff(anchor.range)
@@ -525,14 +522,29 @@ module.exports = class Guest extends Delegator
     @visibleHighlights = shouldShowHighlights
 
   setAnnotationProtocol: (annotationProtocol) ->
-    console.log("GUEST SET ANNOTATION PROTOCOL", annotationProtocol, @element)
+    protocol = Object.keys(annotationProtocol).reduce (previousList, key) ->
+        previousList.push(Object.assign({name: key}, annotationProtocol[key]))
+        return previousList
+      , []
+    protocol.sort (cat1, cat2) ->
+        cat2.priority - cat1.priority
+
+    cssStr = ""
+    for catDef,i in protocol
+      baseColor = colorConvert.rgb.hsl(colorConvert.hex.rgb(catDef.color))
+      color1 = colorConvert.hsl.rgb([baseColor[0], 50, 50])
+      color2 = colorConvert.hsl.rgb([baseColor[0], 75, 50])
+      color3 = colorConvert.hsl.rgb([baseColor[0], 100, 50])
+      cssStr= "#{cssStr}\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} { background-color: rgba(#{color1[0]}, #{color1[1]}, #{color1[2]}, .40) !important; }" +
+        "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} { background-color: rgba(#{color2[0]}, #{color2[1]}, #{color2[2]}, .40) !important; }" +
+        "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} { background-color: rgba(#{color3[0]}, #{color3[1]}, #{color3[2]}, .40) !important; }"
+      for otherCatDef in protocol.slice(i+1).filter( (cdef) -> cdef.priority < catDef.priority )
+        cssStr= "#{cssStr}\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} .annotator-hl-#{otherCatDef.name} { background-color: rgba(#{color1[0]}, #{color1[1]}, #{color1[2]}, .40) !important; }" +
+        "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} .annotator-hl-#{otherCatDef.name} { background-color: rgba(#{color2[0]}, #{color2[1]}, #{color2[2]}, .40) !important; }" +
+        "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} .annotator-hl-#{catDef.name} .annotator-hl-#{otherCatDef.name} { background-color: rgba(#{color3[0]}, #{color3[1]}, #{color3[2]}, .40) !important; }"
+
+
     $('#annotator-dynamic-style').remove()
-    cssStr = Object.keys(annotationProtocol).reduce (previousCss, key) ->
-      "#{previousCss}\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}37 ; }" +
-      "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}ab ; }" +
-      "\n.#{SHOW_HIGHLIGHTS_CLASS} .annotator-hl-#{key} .annotator-hl-#{key} .annotator-hl-#{key} { background-color: #{annotationProtocol[key]}ff ; }"
-    , ""
-    console.log("GUEST SET ANNOTATION PROTOCOL CSS", cssStr)
     styleNode = $("<style/>", { id: "annotator-dynamic-style"})
     styleNode.text(cssStr)
     @element.append(styleNode)

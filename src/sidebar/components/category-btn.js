@@ -2,13 +2,13 @@
 
 // @ngInject
 module.exports = {
-  controller: function (settings) {
+  controller: function (annotationUI) {
     this.category = 'unknown';
     this.catIndex = 0; //TODO use dropdown
     //this.dropdownMenuLabel = ['A','B','C','D'];
 
     //*
-    this.categories = settings.annotationProtocol;
+    this.categories = annotationUI.sortedProtocolList();
 
     this.onClick = function () {
       this.catIndex++;
@@ -35,12 +35,10 @@ module.exports = {
         this.tags[currentCatIndex] = catTag;
       }
 
-      // set button color
-      //console.log(this.css());
     };
 
     this.getDescription = function () {
-      return "placeholder description"; //TODO
+      return 'placeholder description'; //TODO
     };
 
     this.getColor = function () {

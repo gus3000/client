@@ -62,8 +62,6 @@ function initializeAnnot(annotation, tag) {
     orphan = false;
   }
 
-  console.log("INITIALIZE ANNOT", annotation);
-
   return Object.assign({}, annotation, {
     // Flag indicating whether waiting for the annotation to anchor timed out.
     $anchorTimeout: false,
@@ -84,7 +82,6 @@ function init() {
 
 var update = {
   ADD_ANNOTATIONS: function (state, action) {
-    console.log("ADD_ANNOTATIONS", action);
     var updatedIDs = {};
     var updatedTags = {};
 
@@ -234,7 +231,6 @@ function updateFlagStatus(id, isFlagged) {
 function addAnnotations(annotations, now) {
   now = now || new Date();
 
-  console.log("REDUCER ADD ANNOTATIONS", annotations);
   // Add dates to new annotations. These are ignored by the server but used
   // when sorting unsaved annotation cards.
   annotations = annotations.map(function (annot) {

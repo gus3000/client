@@ -32,7 +32,6 @@ function formatAnnot(ann) {
       categories: ann.categories || [],
     },
   };
-  console.log("FORMAT ANNOTATION", ann, res);
   return res;
 }
 
@@ -46,7 +45,10 @@ function formatAnnot(ann) {
  */
 function formatProtocol(prot) {
   return Object.keys(prot).reduce(function(previous, key) {
-    previous[key] = prot[key].color;
+    previous[key] = {
+      color: prot[key].color,
+      priority: prot[key].priority,
+    };
     return previous;
   }, {});
 }
@@ -81,7 +83,6 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
           state.annotationProtocol === prevAnnotationProtocol) {
         return;
       }
-      console.log("ANNOTATION UI SUBSCRIBE", state);
       var publicAnns = 0;
       var inSidebar = new Set();
       var added = [];

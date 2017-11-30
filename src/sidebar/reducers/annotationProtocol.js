@@ -7,9 +7,8 @@
 var util = require('./util');
 
 function init(settings) {
-  console.log("ANNOTATION PROTOCOL INIT", settings);
   const annotProtocol = (settings.annotationProtocol || []).reduce(function(resProt, catDef) {
-    resProt[catDef.name.toLowerCase()] = catDef;
+    resProt[catDef.name.toLowerCase()] = Object.assign({priority: 0}, catDef);
     return resProt;
   }, {});
   return {
@@ -21,8 +20,17 @@ function init(settings) {
 var update = {
 
 };
-
 var actions = util.actionTypes(update);
+
+function sortedProtocolList(state) {
+  const annotationProtocol = state.annotationProtocol;
+  const sortedProtocol = Object.keys(annotationProtocol).reduce(function(previousList, key) {
+    previousList.push(Object.assign({key: key}, annotationProtocol[key]));
+    return previousList;
+  }, []);
+  return sortedProtocol.sort(function(cat1, cat2) { return (cat2.priority || 0) - (cat1.priority || 0); });
+}
+
 
 module.exports = {
   init: init,
@@ -31,5 +39,6 @@ module.exports = {
   },
 
   // Selectors
+  sortedProtocolList: sortedProtocolList,
 };
 

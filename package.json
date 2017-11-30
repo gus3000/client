@@ -29,6 +29,7 @@
     "classnames": "^2.2.4",
     "codecov": "^1.0.1",
     "coffeeify": "^1.0.0",
+    "color-convert": "^1.9.1",
     "commander": "^2.9.0",
     "core-js": "^1.2.5",
     "custom-event": "^1.0.1",

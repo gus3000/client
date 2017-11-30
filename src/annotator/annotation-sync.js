@@ -50,7 +50,6 @@ AnnotationSync.prototype.sync = function(annotations) {
     var formattedAnnotations = [];
 
     for (i = 0; i < annotations.length; i++) {
-      console.log("SYNC", annotations[i]);
       formattedAnnotations.push(this._format(annotations[i]));
     }
     return formattedAnnotations;
@@ -84,7 +83,6 @@ AnnotationSync.prototype._channelListeners = {
       var parsedAnnotations = [];
 
       for (i = 0; i < bodies.length; i++) {
-        console.log("ANNOTATION BODY", bodies[i]);
         parsedAnnotations.push(this._parse(bodies[i]));
       }
       return parsedAnnotations;
@@ -98,7 +96,6 @@ AnnotationSync.prototype._channelListeners = {
       var parsedAnnotations = [];
 
       for (i = 0; i < bodies.length; i++) {
-        console.log("ANNOTATION BODY UPDATE", bodies[i]);
         parsedAnnotations.push(this._parse(bodies[i]));
       }
       return parsedAnnotations;
@@ -182,7 +179,6 @@ AnnotationSync.prototype._parse = function(body) {
 // Format an annotation into an RPC message body with the provided formatter.
 AnnotationSync.prototype._format = function(ann) {
   this._tag(ann);
-  console.log("SYNC FORMAT", ann);
   return {
     tag: ann.$tag,
     msg: ann,

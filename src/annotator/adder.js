@@ -170,7 +170,6 @@ function Adder(container, options) {
       options.onHighlight();
     } else {
       alert('other action 2');
-      console.log('LAPIN');
     }
 
     self.hide();
