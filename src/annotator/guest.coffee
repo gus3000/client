@@ -164,10 +164,17 @@ module.exports = class Guest extends Delegator
         this.updateCategories(annotation)
 
   _connectAnnotationUISync: (crossframe) ->
+    self = this
     crossframe.on 'focusAnnotations', (tags=[]) =>
       for anchor in @anchors when anchor.highlights?
         toggle = anchor.annotation.$tag in tags
-        $(anchor.highlights).toggleClass('annotator-hl-focused', toggle)
+        if toggle
+          $(anchor.highlights).removeClass()
+          $(anchor.highlights).addClass('annotator-hl annotator-hl-focused')
+        else if $(anchor.highlights).hasClass('annotator-hl-focused')
+          $(anchor.highlights).removeClass()
+          $(anchor.highlights).addClass(self._getHighlightClass(anchor.annotation))
+
 
     crossframe.on 'scrollToAnnotation', (tag) =>
       for anchor in @anchors when anchor.highlights?
