@@ -31,6 +31,17 @@ function sortedProtocolList(state) {
   return sortedProtocol.sort(function(cat1, cat2) { return (cat2.priority || 0) - (cat1.priority || 0); });
 }
 
+function getTagColor(state, tag) {
+  const annotationProtocol = state.annotationProtocol;
+  if(tag && tag.startsWith('cat:')) {
+    const tagKey = tag.slice(4).toLowerCase();
+    if(tagKey in annotationProtocol) {
+      return (annotationProtocol[tagKey].color || null);
+    }
+  }
+  return null;
+}
+
 
 module.exports = {
   init: init,
@@ -40,5 +51,6 @@ module.exports = {
 
   // Selectors
   sortedProtocolList: sortedProtocolList,
+  getTagColor: getTagColor,
 };
 

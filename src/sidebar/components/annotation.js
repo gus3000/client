@@ -447,6 +447,10 @@ function AnnotationController(
     return serviceUrl('search.tag', { tag: tag });
   };
 
+  this.tagIsCategory = function (tag) {
+    return tag.startsWith('cat:');
+  };
+
   // Note: We fetch the feature flag outside the `isOrphan` method to avoid a
   // lookup on every $digest cycle
   var indicateOrphans = features.flagEnabled('orphans_tab');

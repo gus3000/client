@@ -126,6 +126,7 @@ module.exports = function ($rootScope, settings) {
     isFeatureEnabled: sessionReducer.isFeatureEnabled,
     profile: sessionReducer.profile,
     sortedProtocolList: annotationProtocolReducer.sortedProtocolList,
+    getTagColor: annotationProtocolReducer.getTagColor,
   }, store.getState);
 
   return Object.assign(store, actionCreators, selectors);

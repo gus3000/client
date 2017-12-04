@@ -69,12 +69,12 @@
        ng-if="(vm.canCollapseBody || vm.state().tags.length) && !vm.editing()">
     <ul class="tag-list">
       <li class="tag-item" ng-repeat="tag in vm.state().tags">
-        <a ng-href="{{vm.tagSearchURL(tag)}}" target="_blank" ng-if="tag.startsWith('cat:')" style="background-color: {{vm.getCatColor(tag)}}; color: white">{{tag.substring(4)}}</a>
-        <a ng-href="{{vm.tagSearchURL(tag)}}" target="_blank" ng-if="!tag.startsWith('cat:')">{{tag}}</a>
+        <a ng-href="{{vm.tagSearchURL(tag)}}" target="_blank" ng-if="vm.tagIsCategory(tag)" style="background-color: {{vm.getCatColor(tag)}}; color: white;">{{tag.substring(4)}}</a>
+        <a ng-href="{{vm.tagSearchURL(tag)}}" target="_blank" ng-if="!vm.tagIsCategory(tag)">{{tag}}</a>
       </li>
     </ul>
     <div class="u-stretch"></div>
-    <a class="annotation-link u-strong"                           ng-show="vm.canCollapseBody"
+    <a class="annotation-link u-strong" ng-show="vm.canCollapseBody"
       ng-click="vm.toggleCollapseBody($event)"
       ng-title="vm.collapseBody ? 'Show the full annotation text' : 'Show the first few lines only'"
       ng-bind="vm.collapseBody ? 'More' : 'Less'"
