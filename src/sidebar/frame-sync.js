@@ -142,7 +142,7 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
         }
       }
 
-      if(prevAnnotationProtocol !== state.annotationProtocol) {
+      if(state.annotationProtocol && prevAnnotationProtocol !== state.annotationProtocol) {
         prevAnnotationProtocol = state.annotationProtocol;
         bridge.call('loadAnnotationProtocol', formatProtocol(state.annotationProtocol));
       }
@@ -276,4 +276,5 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
 module.exports = {
   default: FrameSync,
   formatAnnot: formatAnnot,
+  formatProtocol: formatProtocol,
 };

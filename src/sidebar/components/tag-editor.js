@@ -55,7 +55,6 @@ function TagEditorController(tags, annotationUI, $templateCache) {
   };
 
   this.$onChanges = function (changes) {
-    console.log("NEW TAGS", changes);
     if (changes.tags) {
       this.tagList = changes.tags.currentValue.map(function (tag) {
         let label = tag;

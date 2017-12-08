@@ -8,6 +8,7 @@ var events = require('../events');
 var FrameSync = require('../frame-sync').default;
 var fakeStore = require('./fake-redux-store');
 var formatAnnot = require('../frame-sync').formatAnnot;
+var formatProtocol = require('../frame-sync').formatProtocol;
 var uiConstants = require('../ui-constants');
 
 var fixtures = {
@@ -62,7 +63,7 @@ describe('FrameSync', function () {
   });
 
   beforeEach(function () {
-    fakeAnnotationUI = fakeStore({annotations: []}, {
+    fakeAnnotationUI = fakeStore({annotations: [], annotationProtocol: {}}, {
       connectFrame: sinon.stub(),
       destroyFrame: sinon.stub(),
       findIDsForTags: sinon.stub(),
@@ -289,5 +290,21 @@ describe('FrameSync', function () {
 
       assert.calledWith(fakeBridge.call, 'setVisibleHighlights');
     });
+  });
+
+  context('on protocol messages', function() {
+
+    it('sends a "loadAnnotationProtocol" message to the frame', function () {
+      var annotationProtocol = { 'cat1': { name: 'cat1', color: '#000000', priority: 1 }};
+      fakeAnnotationUI.setState({annotations: [], annotationProtocol: annotationProtocol});
+      assert.calledWithMatch(fakeBridge.call, 'loadAnnotationProtocol', sinon.match(formatProtocol(annotationProtocol)));
+    });
+
+    it('test formatProtocol', function() {
+      var annotationProtocol = { 'cat1': { name: 'cat1', color: '#000000', priority: 1 }};
+      var transformedProtocol = formatProtocol(annotationProtocol);
+      assert.deepEqual( {'cat1': { color: '#000000', priority: 1 }}, transformedProtocol);
+    });
+
   });
 });

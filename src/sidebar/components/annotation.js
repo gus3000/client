@@ -592,7 +592,7 @@ module.exports = {
     onReplyCountClick: '&',
     replyCount: '<',
     isCollapsed: '<',
-    getCatColor: '<'
+    getCatColor: '<',
   },
   template: require('../templates/annotation.html'),
 

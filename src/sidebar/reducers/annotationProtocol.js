@@ -1,5 +1,18 @@
 /**
  * State management for the annotation Protocol.
+ * Annotation protocols are created form metacategories
+ * {
+ *  'cat1': {
+ *    name: 'cat1',
+ *    color: '#000000',
+ *    priority: 1
+ *  }.
+ *  'cat2': {
+ *    name: 'cat2',
+ *    color: '#0000ff',
+ *    priority: 2
+ *  }
+ * }
  */
 
 'use strict';

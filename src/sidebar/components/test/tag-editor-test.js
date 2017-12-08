@@ -6,6 +6,8 @@ var util = require('../../directive/test/util');
 
 describe('tagEditor', function () {
   var fakeTags;
+  var fakeAnnotationUI;
+  var fakeTemplateCache;
 
   before(function () {
     angular.module('app',[])
@@ -17,9 +19,17 @@ describe('tagEditor', function () {
       filter: sinon.stub(),
       store: sinon.stub(),
     };
+    fakeAnnotationUI = {
+      getTagColor: sinon.stub().returns('#000000'),
+    };
+    fakeTemplateCache = {
+      put: sinon.stub(),
+    };
 
     angular.mock.module('app', {
       tags: fakeTags,
+      annotationUI: fakeAnnotationUI,
+      '$templateCache': fakeTemplateCache,
     });
   });
 
@@ -27,7 +37,7 @@ describe('tagEditor', function () {
     var element = util.createDirective(document, 'tag-editor', {
       tags: ['foo', 'bar'],
     });
-    assert.deepEqual(element.ctrl.tagList, [{text: 'foo'}, {text: 'bar'}]);
+    assert.deepEqual(element.ctrl.tagList, [{text: 'foo', label: 'foo', color: '#000000'}, {text: 'bar', label: 'bar', color: '#000000'}]);
   });
 
   describe('when tags are changed', function () {
@@ -48,7 +58,7 @@ describe('tagEditor', function () {
     });
 
     it('saves tags to the store', function () {
-      assert.calledWith(fakeTags.store, sinon.match([{text: 'foo'}]));
+      assert.calledWith(fakeTags.store, sinon.match([{text: 'foo', label: 'foo', color: '#000000'}]));
     });
   });
 
