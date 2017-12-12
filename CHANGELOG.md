@@ -4,6 +4,122 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 # Change Log
 
+## [1.59.0] - 2017-12-11
+
+### Changed
+
+- Remove create account banner
+  ([#630](https://github.com/hypothesis/client/pull/630)).
+
+## [1.58.0] - 2017-12-07
+
+### Changed
+
+- Don't show page share button on eLife pages
+  ([#620](https://github.com/hypothesis/client/pull/620)).
+
+- Don’t link tags to activity pages on eLife
+  ([#623](https://github.com/hypothesis/client/pull/623)).
+
+- Show the shorter version of the empty annotations/notes message when …
+  ([#611](https://github.com/hypothesis/client/pull/611)).
+
+- Bundle the clean theme related config options into the theme = 'clean…
+  ([#624](https://github.com/hypothesis/client/pull/624)).
+
+- Disable close btn when the classic theme is on. Also fix errors with …
+  ([#626](https://github.com/hypothesis/client/pull/626)).
+
+## [1.57.0] - 2017-12-04
+
+### Changed
+
+- Make the "New note" button "image" in the tutorial pane look & behave less
+  like an actual button ([#582](https://github.com/hypothesis/client/pull/582)).
+
+- Do not hyperlink annotation timestamps when the annotation has no href
+  ([#617](https://github.com/hypothesis/client/pull/617)).
+
+- Do not show share dialog if no incontext link
+  ([#618](https://github.com/hypothesis/client/pull/618)).
+
+## [1.56.0] - 2017-11-29
+
+### Changed
+
+- Remove `oauthEnabled` client config setting
+  ([#604](https://github.com/hypothesis/client/pull/604)).
+
+## [1.55.0] - 2017-11-23
+
+### Changed
+
+- Remove checks for `search_for_doi` feature flag
+  ([#598](https://github.com/hypothesis/client/pull/598)).
+
+- Remove checks for `flag_action` feature flag.
+  ([#597](https://github.com/hypothesis/client/pull/597)).
+
+## [1.54.0] - 2017-11-22
+
+### Changed
+
+- Fix issue that could lead to user being logged into normal Hypothesis account
+  on websites using third-party accounts
+  ([#572](https://github.com/hypothesis/client/pull/572)).
+
+## [1.53.0] - 2017-11-16
+
+### Changed
+
+- Fix default values for settings not being used in the browser extension
+  ([#581](https://github.com/hypothesis/client/pull/581)).
+
+## [1.52.0] - 2017-11-16
+
+### Changed
+
+- Only show display names on annotation cards if the new `client_display_names`
+  feature flag is on _or_ if the annotation's creator is a third-party user
+  ([#579](https://github.com/hypothesis/client/pull/579)).
+
+- Add a new config option that enables a new-style for the sidebar tutorial
+  card ([#580](https://github.com/hypothesis/client/pull/580)).
+
+- Remove no-longer-used orphans tab feature flag checks
+  ([#578](https://github.com/hypothesis/client/pull/578)).
+
+## [1.51.0] - 2017-11-14
+
+### Changed
+
+- Implement new customisation options for the sidebar’s display.
+  ([#555](https://github.com/hypothesis/client/pull/555)).
+  ([#573](https://github.com/hypothesis/client/pull/573)).
+
+## [1.50.0] - 2017-11-08
+
+### Changed
+
+- Improve performance on pages with very large numbers of annotations
+  ([#559](https://github.com/hypothesis/client/pull/559)).
+
+## [1.49.0] - 2017-11-08
+
+### Changed
+
+- Add OAuth client registration steps to developer docs
+  ([#567](https://github.com/hypothesis/client/pull/567)).
+
+- Strip unknown query params when generating Internet Archive embed URLs
+  ([#561](https://github.com/hypothesis/client/pull/561)).
+
+- Fix a cause of unexpected anchoring failures in PDFs
+  ([#563](https://github.com/hypothesis/client/pull/563)).
+
+- Remove support for cookie-based authentication
+  ([#542](https://github.com/hypothesis/client/pull/542)).
+
 ## [1.48.0] - 2017-10-23
 
 ### Changed

@@ -1,13 +1,20 @@
 'use strict';
 
 var angular = require('angular');
+var proxyquire = require('proxyquire');
 
 var util = require('../../directive/test/util');
 
 describe('topBar', function () {
+  var fakeSettings = {};
+  var fakeIsThirdPartyService = sinon.stub();
+
   before(function () {
     angular.module('app', [])
-      .component('topBar', require('../top-bar'))
+      .component('topBar', proxyquire('../top-bar', {
+        '../util/is-third-party-service': fakeIsThirdPartyService,
+        '@noCallThru': true,
+      }))
       .component('loginControl', {
         bindings: require('../login-control').bindings,
       })
@@ -20,7 +27,12 @@ describe('topBar', function () {
   });
 
   beforeEach(function () {
-    angular.mock.module('app');
+    angular.mock.module('app', {
+      settings: fakeSettings,
+    });
+
+    fakeIsThirdPartyService.reset();
+    fakeIsThirdPartyService.returns(false);
   });
 
   function applyUpdateBtn(el) {
@@ -83,6 +95,39 @@ describe('topBar', function () {
     assert.called(onLogout);
   });
 
+  it("checks whether we're using a third-party service", function () {
+    createTopBar();
+
+    assert.called(fakeIsThirdPartyService);
+    assert.alwaysCalledWithExactly(fakeIsThirdPartyService, fakeSettings);
+  });
+
+  context('when using a first-party service', function () {
+    it('shows the share page button', function () {
+      var el = createTopBar();
+      // I want the DOM element, not AngularJS's annoying angular.element
+      // wrapper object.
+      el = el [0];
+
+      assert.isNotNull(el.querySelector('[title="Share this page"]'));
+    });
+  });
+
+  context('when using a third-party service', function () {
+    beforeEach(function() {
+      fakeIsThirdPartyService.returns(true);
+    });
+
+    it("doesn't show the share page button", function () {
+      var el = createTopBar();
+      // I want the DOM element, not AngularJS's annoying angular.element
+      // wrapper object.
+      el = el [0];
+
+      assert.isNull(el.querySelector('[title="Share this page"]'));
+    });
+  });
+
   it('displays the share page when "Share this page" is clicked', function () {
     var onSharePage = sinon.stub();
     var el = createTopBar({ onSharePage: onSharePage });
@@ -124,5 +169,14 @@ describe('topBar', function () {
 
     sortDropdown.onChangeSortKey({sortKey: 'Oldest'});
     assert.calledWith(onChangeSortKey, 'Oldest');
+  });
+
+  it('shows the clean theme when settings contains the clean theme option', function () {
+    angular.mock.module('app', {
+      settings: { theme: 'clean' },
+    });
+
+    var el = createTopBar();
+    assert.ok(el[0].querySelector('.top-bar--theme-clean'));
   });
 });

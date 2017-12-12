@@ -98,12 +98,6 @@ function configureToastr(toastrConfig) {
 }
 
 // @ngInject
-function configureHttp($httpProvider) {
-  // Use the Pyramid XSRF header name
-  $httpProvider.defaults.xsrfHeaderName = 'X-CSRF-Token';
-}
-
-// @ngInject
 function setupHttp($http, streamer) {
   $http.defaults.headers.common['X-Client-Id'] = streamer.clientId;
 }
@@ -114,39 +108,9 @@ function processAppOpts() {
   }
 }
 
-function canSetCookies() {
-  // Try to add a short-lived cookie. Note the `document.cookie` setter has
-  // unusual semantics, this doesn't overwrite other cookies.
-  document.cookie = 'cookie-setter-test=1;max-age=5';
-  return document.cookie.indexOf('cookie-setter-test=1') !== -1;
-}
-
-function shouldUseOAuth() {
-  if (serviceConfig(settings)) {
-    // If the host page supplies annotation service configuration, including a
-    // grant token, use OAuth.
-    return true;
-  }
-  if (!canSetCookies()) {
-    // If cookie storage is blocked by the browser, we have to use OAuth.
-    return true;
-  }
-  // Otherwise, use OAuth only if the feature flag is enabled.
-  return settings.oauthClientId && settings.oauthEnabled;
-}
-
-var authService;
-if (shouldUseOAuth()) {
-  authService = require('./oauth-auth');
-} else {
-  authService = require('./auth');
-}
-
 module.exports = angular.module('h', [
   // Angular addons which export the Angular module name
   // via module.exports
-  require('angular-jwt'),
-  require('angular-resource'),
   require('angular-route'),
   require('angular-sanitize'),
   require('angular-toastr'),
@@ -180,9 +144,9 @@ module.exports = angular.module('h', [
   .component('helpPanel', require('./components/help-panel'))
   .component('loggedoutMessage', require('./components/loggedout-message'))
   .component('loginControl', require('./components/login-control'))
-  .component('loginForm', require('./components/login-form'))
   .component('markdown', require('./components/markdown'))
   .component('moderationBanner', require('./components/moderation-banner'))
+  .component('newNoteBtn', require('./components/new-note-btn'))
   .component('publishAnnotationBtn', require('./components/publish-annotation-btn'))
   .component('searchInput', require('./components/search-input'))
   .component('searchStatusBar', require('./components/search-status-bar'))
@@ -198,26 +162,22 @@ module.exports = angular.module('h', [
   .component('timestamp', require('./components/timestamp'))
   .component('topBar', require('./components/top-bar'))
 
-  .directive('formInput', require('./directive/form-input'))
-  .directive('formValidate', require('./directive/form-validate'))
   .directive('hAutofocus', require('./directive/h-autofocus'))
   .directive('hBranding', require('./directive/h-branding'))
   .directive('hOnTouch', require('./directive/h-on-touch'))
   .directive('hTooltip', require('./directive/h-tooltip'))
   .directive('spinner', require('./directive/spinner'))
-  .directive('statusButton', require('./directive/status-button'))
   .directive('windowScroll', require('./directive/window-scroll'))
 
   .service('analytics', require('./analytics'))
   .service('annotationMapper', require('./annotation-mapper'))
   .service('annotationUI', require('./annotation-ui'))
   .service('apiRoutes', require('./api-routes'))
-  .service('auth', authService)
+  .service('auth', require('./oauth-auth'))
   .service('bridge', require('../shared/bridge'))
   .service('drafts', require('./drafts'))
   .service('features', require('./features'))
   .service('flash', require('./flash'))
-  .service('formRespond', require('./form-respond'))
   .service('frameSync', require('./frame-sync').default)
   .service('groups', require('./groups'))
   .service('localStorage', require('./local-storage'))
@@ -237,6 +197,7 @@ module.exports = angular.module('h', [
 
   .value('Discovery', require('../shared/discovery'))
   .value('ExcerptOverflowMonitor', require('./util/excerpt-overflow-monitor'))
+  .value('OAuthClient', require('./util/oauth-client'))
   .value('VirtualThreadList', require('./virtual-thread-list'))
   .value('random', require('./util/random'))
   .value('raven', require('./raven'))
@@ -245,7 +206,6 @@ module.exports = angular.module('h', [
   .value('time', require('./time'))
   .value('urlEncodeFilter', require('./filter/url').encode)
 
-  .config(configureHttp)
   .config(configureLocation)
   .config(configureRoutes)
   .config(configureToastr)

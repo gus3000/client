@@ -1,14 +1,13 @@
 'use strict';
 
+var sessionUtil = require('../util/session-util');
+
 // @ngInject
-function SidebarTutorialController(session) {
+function SidebarTutorialController(session, settings) {
+  this.isThemeClean = settings.theme === 'clean';
+
   this.showSidebarTutorial = function () {
-    if (session.state.preferences) {
-      if (session.state.preferences.show_sidebar_tutorial) {
-        return true;
-      }
-    }
-    return false;
+    return sessionUtil.shouldShowSidebarTutorial(session.state);
   };
 
   this.dismiss = function () {

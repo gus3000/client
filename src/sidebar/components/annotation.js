@@ -2,7 +2,7 @@
 
 var annotationMetadata = require('../annotation-metadata');
 var events = require('../events');
-var persona = require('../filter/persona');
+var { isThirdPartyUser } = require('../util/account-id');
 
 var isNew = annotationMetadata.isNew;
 var isReply = annotationMetadata.isReply;
@@ -26,7 +26,7 @@ function updateModel(annotation, changes, permissions) {
 // @ngInject
 function AnnotationController(
   $document, $rootScope, $scope, $timeout, $window, analytics, annotationUI,
-  annotationMapper, drafts, flash, features, groups, permissions, serviceUrl,
+  annotationMapper, drafts, flash, groups, permissions, serviceUrl,
   session, settings, store, streamer) {
 
   var self = this;
@@ -57,13 +57,13 @@ function AnnotationController(
       });
 
 
-      if (self.isReply()) {
+      if(self.isReply()){
         event = updating ? analytics.events.REPLY_UPDATED : analytics.events.REPLY_CREATED;
-      } else if (self.isHighlight()) {
+      }else if(self.isHighlight()){
         event = updating ? analytics.events.HIGHLIGHT_UPDATED : analytics.events.HIGHLIGHT_CREATED;
-      } else if (isPageNote(self.annotation)) {
+      }else if(isPageNote(self.annotation)) {
         event = updating ? analytics.events.PAGE_NOTE_UPDATED : analytics.events.PAGE_NOTE_CREATED;
-      } else {
+      }else {
         event = updating ? analytics.events.ANNOTATION_UPDATED : analytics.events.ANNOTATION_CREATED;
       }
 
@@ -114,7 +114,7 @@ function AnnotationController(
     self.annotation.group = self.annotation.group || groups.focused().id;
     if (!self.annotation.permissions) {
       self.annotation.permissions = permissions.default(self.annotation.user,
-        self.annotation.group);
+                                                      self.annotation.group);
     }
     self.annotation.text = self.annotation.text || '';
     if (!Array.isArray(self.annotation.tags)) {
@@ -162,7 +162,7 @@ function AnnotationController(
       // User is logged in, save to server.
       // Highlights are always private.
       self.annotation.permissions = permissions.private(self.annotation.user);
-      save(self.annotation).then(function (model) {
+      save(self.annotation).then(function(model) {
         model.$tag = self.annotation.$tag;
         $rootScope.$broadcast(events.ANNOTATION_CREATED, model);
       });
@@ -172,7 +172,7 @@ function AnnotationController(
     }
   }
 
-  this.authorize = function (action) {
+  this.authorize = function(action) {
     return permissions.permits(
       self.annotation.permissions,
       action,
@@ -185,7 +185,7 @@ function AnnotationController(
     * @name annotation.AnnotationController#flag
     * @description Flag the annotation.
     */
-  this.flag = function () {
+  this.flag = function() {
     if (!session.state.userid) {
       flash.error(
         'You must be logged in to report an annotation to the moderators.',
@@ -194,10 +194,10 @@ function AnnotationController(
       return;
     }
 
-    var onRejected = function (err) {
+    var onRejected = function(err) {
       flash.error(err.message, 'Flagging annotation failed');
     };
-    annotationMapper.flagAnnotation(self.annotation).then(function () {
+    annotationMapper.flagAnnotation(self.annotation).then(function(){
       analytics.track(analytics.events.ANNOTATION_FLAGGED);
       annotationUI.updateFlagStatus(self.annotation.id, true);
     }, onRejected);
@@ -208,24 +208,24 @@ function AnnotationController(
     * @name annotation.AnnotationController#delete
     * @description Deletes the annotation.
     */
-  this.delete = function () {
-    return $timeout(function () {  // Don't use confirm inside the digest cycle.
+  this.delete = function() {
+    return $timeout(function() {  // Don't use confirm inside the digest cycle.
       var msg = 'Are you sure you want to delete this annotation?';
       if ($window.confirm(msg)) {
-        var onRejected = function (err) {
+        var onRejected = function(err) {
           flash.error(err.message, 'Deleting annotation failed');
         };
-        $scope.$apply(function () {
-          annotationMapper.deleteAnnotation(self.annotation).then(function () {
+        $scope.$apply(function() {
+          annotationMapper.deleteAnnotation(self.annotation).then(function(){
             var event;
 
-            if (self.isReply()) {
+            if(self.isReply()){
               event = analytics.events.REPLY_DELETED;
-            } else if (self.isHighlight()) {
+            }else if(self.isHighlight()){
               event = analytics.events.HIGHLIGHT_DELETED;
-            } else if (isPageNote(self.annotation)) {
+            }else if(isPageNote(self.annotation)){
               event = analytics.events.PAGE_NOTE_DELETED;
-            } else {
+            }else {
               event = analytics.events.ANNOTATION_DELETED;
             }
 
@@ -242,7 +242,7 @@ function AnnotationController(
     * @name annotation.AnnotationController#edit
     * @description Switches the view to an editor.
     */
-  this.edit = function () {
+  this.edit = function() {
     if (!drafts.get(self.annotation)) {
       drafts.update(self.annotation, self.state());
     }
@@ -254,7 +254,7 @@ function AnnotationController(
    * @returns {boolean} `true` if this annotation is currently being edited
    *   (i.e. the annotation editor form should be open), `false` otherwise.
    */
-  this.editing = function () {
+  this.editing = function() {
     return drafts.get(self.annotation) && !self.isSaving;
   };
 
@@ -263,7 +263,7 @@ function AnnotationController(
     * @name annotation.AnnotationController#group.
     * @returns {Object} The full group object associated with the annotation.
     */
-  this.group = function () {
+  this.group = function() {
     return groups.get(self.annotation.group);
   };
 
@@ -273,14 +273,14 @@ function AnnotationController(
     * @returns {boolean} `true` if this annotation has content, `false`
     *   otherwise.
     */
-  this.hasContent = function () {
+  this.hasContent = function() {
     return self.state().text.length > 0 || self.state().tags.length > 0;
   };
 
   /**
     * Return the annotation's quote if it has one or `null` otherwise.
     */
-  this.quote = function () {
+  this.quote = function() {
     if (self.annotation.target.length === 0) {
       return null;
     }
@@ -294,7 +294,7 @@ function AnnotationController(
     return quoteSel ? quoteSel.exact : null;
   };
 
-  this.id = function () {
+  this.id = function() {
     return self.annotation.id;
   };
 
@@ -303,7 +303,7 @@ function AnnotationController(
     * @name annotation.AnnotationController#isHighlight.
     * @returns {boolean} true if the annotation is a highlight, false otherwise
     */
-  this.isHighlight = function () {
+  this.isHighlight = function() {
     if (newlyCreatedByHighlightButton) {
       return true;
     } else if (isNew(self.annotation)) {
@@ -331,7 +331,7 @@ function AnnotationController(
     * @returns {boolean} True if the annotation is shared (either with the
     * current group or with everyone).
     */
-  this.isShared = function () {
+  this.isShared = function() {
     return !self.state().isPrivate;
   };
 
@@ -343,7 +343,7 @@ function AnnotationController(
     }
   };
 
-  this.toggleCollapseBody = function (event) {
+  this.toggleCollapseBody = function(event) {
     event.stopPropagation();
     self.collapseBody = !self.collapseBody;
   };
@@ -354,7 +354,7 @@ function AnnotationController(
     * @description
     * Creates a new message in reply to this annotation.
     */
-  this.reply = function () {
+  this.reply = function() {
     var references = (self.annotation.references || []).concat(self.annotation.id);
     var group = self.annotation.group;
     var replyPermissions;
@@ -367,7 +367,7 @@ function AnnotationController(
       group: group,
       references: references,
       permissions: replyPermissions,
-      target: [{ source: self.annotation.target[0].source }],
+      target: [{source: self.annotation.target[0].source}],
       uri: self.annotation.uri,
     });
   };
@@ -377,14 +377,14 @@ function AnnotationController(
     * @name annotation.AnnotationController#revert
     * @description Reverts an edit in progress and returns to the viewer.
     */
-  this.revert = function () {
+  this.revert = function() {
     drafts.remove(self.annotation);
     if (isNew(self.annotation)) {
       $rootScope.$broadcast(events.ANNOTATION_DELETED, self.annotation);
     }
   };
 
-  this.save = function () {
+  this.save = function() {
     if (!self.annotation.user) {
       flash.info('Please log in to save your annotations.');
       return Promise.resolve();
@@ -428,7 +428,7 @@ function AnnotationController(
     *
     * The changes take effect when the annotation is saved
     */
-  this.setPrivacy = function (privacy) {
+  this.setPrivacy = function(privacy) {
     // When the user changes the privacy level of an annotation they're
     // creating or editing, we cache that and use the same privacy level the
     // next time they create an annotation.
@@ -443,34 +443,30 @@ function AnnotationController(
     });
   };
 
-  this.tagSearchURL = function (tag) {
-    return serviceUrl('search.tag', { tag: tag });
+  this.tagSearchURL = function(tag) {
+    if (this.isThirdPartyUser()) {
+      return null;
+    }
+    return serviceUrl('search.tag', {tag: tag});
   };
 
   this.tagIsCategory = function (tag) {
     return tag.startsWith('cat:');
   };
 
-  // Note: We fetch the feature flag outside the `isOrphan` method to avoid a
-  // lookup on every $digest cycle
-  var indicateOrphans = features.flagEnabled('orphans_tab');
-
-  this.isOrphan = function () {
-    if (!indicateOrphans) {
-      return false;
-    }
+  this.isOrphan = function() {
     if (typeof self.annotation.$orphan === 'undefined') {
       return self.annotation.$anchorTimeout;
     }
     return self.annotation.$orphan;
   };
 
-  this.user = function () {
+  this.user = function() {
     return self.annotation.user;
   };
 
   this.isThirdPartyUser = function () {
-    return persona.isThirdPartyUser(self.annotation.user, settings.authDomain);
+    return isThirdPartyUser(self.annotation.user, settings.authDomain);
   };
 
   this.isDeleted = function () {
@@ -482,16 +478,11 @@ function AnnotationController(
   };
 
   this.canFlag = function () {
-    if (session.state.userid === self.annotation.user) {
-      return false;
-    }
-    if (persona.isThirdPartyUser(self.annotation.user, settings.authDomain)) {
-      return true;
-    }
-    return features.flagEnabled('flag_action');
+    // Users can flag any annotations except their own.
+    return session.state.userid !== self.annotation.user;
   };
 
-  this.isFlagged = function () {
+  this.isFlagged = function() {
     return self.annotation.flagged;
   };
 
@@ -502,8 +493,8 @@ function AnnotationController(
   this.incontextLink = function () {
     if (self.annotation.links) {
       return self.annotation.links.incontext ||
-        self.annotation.links.html ||
-        '';
+             self.annotation.links.html ||
+             '';
     }
     return '';
   };
@@ -548,7 +539,7 @@ function AnnotationController(
       tags: self.annotation.tags,
       text: self.annotation.text,
       isPrivate: !permissions.isShared(self.annotation.permissions,
-        self.annotation.user),
+                                       self.annotation.user),
     };
   };
 
