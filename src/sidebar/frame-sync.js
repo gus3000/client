@@ -130,7 +130,7 @@ function FrameSync($rootScope, $window, Discovery, annotationUI, bridge) {
       }
       deleted.forEach(function (annot) {
         bridge.call('deleteAnnotation', formatAnnot(annot));
-        inFrame.delete(annot.$tag);
+        delete inFrame[annot.$tag];
       });
 
       var frames = annotationUI.frames();
