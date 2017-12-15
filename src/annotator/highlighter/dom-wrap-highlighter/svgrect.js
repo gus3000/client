@@ -62,36 +62,4 @@ function boundingClientRectToBBox(rect, ctx)
   return {x:pt2.x, y:pt2.y, width: pt3.x - pt2.x, height: pt3.y - pt2.y};
 }
 
-
-function lol() {
-  var svg = document.getElementsByTagName('svg')[0];
-  var svgNS = svg.getAttribute('xmlns');
-  var pt = svg.createSVGPoint();
-  var g = document.querySelector('g');
-  window.onload = function () {
-    var xform = g.getScreenCTM().inverse();
-    var tspans = svg.getElementsByTagName('tspan');
-    for (var i = 0, len = tspans.length; i < len; ++i) {
-      var tspan = tspans[i]; //TODO mettre le rect à la racine du document
-      //TODO vérifier rotation
-      var rect = document.createElementNS(svgNS, 'rect');
-      var bbox = tspan.getBoundingClientRect();
-
-      pt.x = bbox.left;
-      pt.y = bbox.top;
-      var pt2 = pt.matrixTransform(xform);
-      rect.setAttribute('x', pt2.x);
-      rect.setAttribute('y', pt2.y);
-
-      pt.x = bbox.right;
-      pt.y = bbox.bottom;
-      pt = pt.matrixTransform(xform);
-      rect.setAttribute('width', pt.x - pt2.x);
-      rect.setAttribute('height', pt.y - pt2.y);
-
-      g.appendChild(rect);
-    }
-  }
-}
-
 module.exports = insertRect;
