@@ -1,5 +1,5 @@
 $ = require('jquery')
-
+svgrect = require('./svgrect')
 # Public: Wraps the DOM Nodes within the provided range with a highlight
 # element of the specified class and returns the highlight Elements.
 #
@@ -9,10 +9,8 @@ $ = require('jquery')
 # Returns an array of highlight Elements.
 exports.highlightRange = (normedRange, cssClass='annotator-hl') ->
   white = /^\s*$/
-
-  # A custom element name is used here rather than `<span>` to reduce the
-  # likelihood of highlights being hidden by page styling.
-  hl = $("<hypothesis-highlight class='#{cssClass}'></hypothesis-highlight>")
+  
+  
 
   # Ignore text nodes that contain only whitespace characters. This prevents
   # spans being injected between elements that can only contain a restricted
@@ -20,8 +18,19 @@ exports.highlightRange = (normedRange, cssClass='annotator-hl') ->
   # may be the odd abandoned whitespace node in a paragraph that is skipped
   # but better than breaking table layouts.
   nodes = $(normedRange.textNodes()).filter((i) -> not white.test @nodeValue)
+  
+  
+  nodeToCheck = nodes[0].parentNode
 
-  return nodes.wrap(hl).parent().toArray()
+  if nodeToCheck instanceof SVGElement
+    svgrect(nodeToCheck)
+
+  else # HTML
+    # A custom element name is used here rather than `<span>` to reduce the
+    # likelihood of highlights being hidden by page styling.
+    hl = $("<hypothesis-highlight class='#{cssClass}'></hypothesis-highlight>")
+    return nodes.wrap(hl).parent().toArray()
+
 
 
 exports.removeHighlights = (highlights) ->
