@@ -318,13 +318,18 @@ function SidebarContentController(
   };
 
   this.clearSelection = function () {
-    var selectedTab = annotationUI.getState().selectedTab;
+    var state = annotationUI.getState();
+    var selectedTab = state.selectedTab;
     if (!annotationUI.getState().selectedTab || annotationUI.getState().selectedTab === uiConstants.TAB_ORPHANS) {
       selectedTab = uiConstants.TAB_ANNOTATIONS;
     }
 
+    var annotation = firstSelectedAnnotation();
     annotationUI.clearSelectedAnnotations();
     annotationUI.selectTab(selectedTab);
+    if(annotation) {
+      $scope.$broadcast(events.SCROLL_TO_ANNOTATION_REQUESTED, annotation);
+    }
   };
 }
 

@@ -133,6 +133,12 @@ function ThreadListController($element, $scope, settings, VirtualThreadList) {
     scrollIntoView(annotation.$tag);
   });
 
+  $scope.$on(events.SCROLL_TO_ANNOTATION_REQUESTED, function (event, annotation) {
+    if(annotation) {
+      scrollIntoView(annotation.id);
+    }
+  });
+
   this.$onChanges = function (changes) {
     if (changes.thread) {
       visibleThreads.setRootThread(changes.thread.currentValue);

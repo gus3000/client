@@ -231,4 +231,19 @@ describe('threadList', function () {
     var scrollRoot = fakeVirtualThread.options.scrollRoot;
     assert.isTrue(scrollRoot.classList.contains('js-thread-list-scroll-root'));
   });
+
+  describe('when the selection is cleared', function () {
+    it('scrolls the previously selected annotation into view', function () {
+      var element = createThreadList();
+      element.parentEl.scrollTop = 500;
+
+      var annot = annotFixtures.annotation;
+      element.scope.$broadcast(events.SCROLL_TO_ANNOTATION_REQUESTED, annot);
+
+      // Check that the thread list was scrolled up to make the new annotation
+      // visible.
+      assert.isBelow(element.parentEl.scrollTop, 100);
+    });
+  });
+
 });

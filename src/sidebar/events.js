@@ -51,4 +51,7 @@ module.exports = {
 
   /** An annotation is unloaded. */
   ANNOTATIONS_UNLOADED: 'annotationsUnloaded',
+
+  /** A scroll to an annotation is requested in the thread list */
+  SCROLL_TO_ANNOTATION_REQUESTED: 'scrollToAnnotationRequested',
 };

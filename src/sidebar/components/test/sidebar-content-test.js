@@ -255,6 +255,16 @@ describe('sidebar.components.sidebar-content', function () {
       it('loads annotations in one batch', function () {
         assert.notOk(searchClients[0].incremental);
       });
+
+      it('On clearSelection the controler broadcast events.SCROLL_TO_ANNOTATION_REQUESTED with the first selected annotation', function () {
+        annotationUI.addAnnotations([{id: 'http://example.com123'}]);
+        $scope.$digest();
+        sandbox.spy($scope, '$broadcast');
+        ctrl.clearSelection();
+        var state = annotationUI.getState();
+        assert.calledWith($scope.$broadcast, events.SCROLL_TO_ANNOTATION_REQUESTED, state.annotations[0]);
+      });
+
     });
 
     context('when there is no selection', function () {
