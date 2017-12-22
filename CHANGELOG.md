@@ -4,6 +4,28 @@ Entries in this change log follow the format suggested at http://keepachangelog.
 
 # Change Log
 
+## [1.61.0] - 2017-12-19
+
+### Changed
+
+- Rename the main JS bundles that make up the client
+  ([#633](https://github.com/hypothesis/client/pull/633)).
+
+- Fix broken adder toolbar styling
+  ([#642](https://github.com/hypothesis/client/pull/642)).
+
+## [1.60.0] - 2017-12-19
+
+### Changed
+
+- Update the docs for config options available to third party publishers.
+  ([#636](https://github.com/hypothesis/client/pull/636)).
+
+- Some internal restructuring of the client
+  ([#632](https://github.com/hypothesis/client/pull/632),
+   [#634](https://github.com/hypothesis/client/pull/634),
+   [#635](https://github.com/hypothesis/client/pull/635))
+
 ## [1.59.0] - 2017-12-11
 
 ### Changed
