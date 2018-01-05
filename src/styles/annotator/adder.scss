@@ -77,7 +77,7 @@ $adder-transition-duration: 80ms;
   top: -5px;
 }
 
-.annotator-adder-actions {
+.annotator-adder-other-actions, .annotator-adder-base-actions {
   display: flex;
   flex-direction: row;
 }
@@ -125,3 +125,17 @@ $adder-transition-duration: 80ms;
   color: $gray-dark !important;
   transition: color $adder-transition-duration;
 }
+
+.annotator-adder-other-actions {
+  .annotator-adder-actions__button {
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 5px;
+    padding-right: 5px;
+
+  }
+  .annotator-adder-actions__label {
+    font-size: 1.5em;
+  }
+}
+
