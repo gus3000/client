@@ -74,6 +74,10 @@ module.exports = class Guest extends Delegator
         self.setVisibleHighlights(true)
         self.createHighlight()
         document.getSelection().removeAllRanges()
+      onHighlightCategory: (category) ->
+        self.setVisibleHighlights(true)
+        self.createHighlight({ categories: [category,], tags: ['cat:'+category,] })
+        document.getSelection().removeAllRanges()
     })
     this.selections = selections(document).subscribe
       next: (range) ->
@@ -391,8 +395,8 @@ module.exports = class Guest extends Delegator
     @crossframe?.call('showSidebar') unless annotation.$highlight
     annotation
 
-  createHighlight: ->
-    return this.createAnnotation({$highlight: true})
+  createHighlight: (annotation = {}) ->
+    return this.createAnnotation(Object.assign(annotation, {$highlight: true}))
 
   # Create a blank comment (AKA "page note")
   createComment: () ->
@@ -535,6 +539,8 @@ module.exports = class Guest extends Delegator
       , []
     protocol.sort (cat1, cat2) ->
         cat2.priority - cat1.priority
+
+    this.adderCtrl.initElement(@adder[0], protocol);
 
     cssStr = ""
     for catDef,i in protocol

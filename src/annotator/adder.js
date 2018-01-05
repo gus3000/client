@@ -4,9 +4,10 @@ var classnames = require('classnames');
 
 var template = require('./adder.html');
 
+var $ = require('jquery');
+
 var ANNOTATE_BTN_CLASS = 'js-annotate-btn';
 var HIGHLIGHT_BTN_CLASS = 'js-highlight-btn';
-var OTHER_BTN_CLASS = 'js-other-btn';
 
 var ANNOTATE_BTN_SELECTOR = '.js-annotate-btn';
 var HIGHLIGHT_BTN_SELECTOR = '.js-highlight-btn';
@@ -42,7 +43,10 @@ var ARROW_HEIGHT = 10;
 var ARROW_H_MARGIN = 20;
 
 function attachShadow(element) {
-  if (element.attachShadow) {
+  if (element.shadowRoot) {
+    return element.shadowRoot;
+  }
+  else if (element.attachShadow) {
     // Shadow DOM v1 (Chrome v53, Safari 10)
     return element.attachShadow({mode: 'open'});
   } else if (element.createShadowRoot) {
@@ -77,7 +81,7 @@ function nearestPositionedAncestor(el) {
  *
  * Returns the root DOM node for the adder, which may be in a shadow tree.
  */
-function createAdderDOM(container) {
+function createAdderDOM(container, protocol) {
   var element;
 
   // If the browser supports Shadow DOM, use it to isolate the adder
@@ -116,6 +120,15 @@ function createAdderDOM(container) {
     container.innerHTML = template;
     element = container.querySelector('.js-adder');
   }
+
+  var baseActionElem = $('hypothesis-adder-other-actions', element);
+  protocol.forEach(catDef => {
+    baseActionElem.append(
+    `<button class="annotator-adder-actions__button js-other-btn" data-category="${catDef.name}" title="${catDef.name}">
+      <span class="annotator-adder-actions__label" data-action="other" title="${catDef.name}" style="color: ${catDef.color} !important;" >&#x25cf;</span>
+    </button>`);
+  });
+
   return element;
 }
 
@@ -130,34 +143,41 @@ function createAdderDOM(container) {
 function Adder(container, options) {
 
   var self = this;
-  self.element = createAdderDOM(container);
 
-  // Set initial style
-  Object.assign(container.style, {
-    display: 'block',
+  this.initElement = function (container, protocol = []) {
 
-    // take position out of layout flow initially
-    position: 'absolute',
-    top: 0,
+    self.element = createAdderDOM(container, protocol);
 
-    // Assign a high Z-index so that the adder shows above any content on the
-    // page
-    zIndex: 999,
-  });
+    // Set initial style
+    Object.assign(container.style, {
+      display: 'block',
 
-  // The adder is hidden using the `visibility` property rather than `display`
-  // so that we can compute its size in order to position it before display.
-  self.element.style.visibility = 'hidden';
+      // take position out of layout flow initially
+      position: 'absolute',
+      top: 0,
 
-  var view = self.element.ownerDocument.defaultView;
-  var enterTimeout;
+      // Assign a high Z-index so that the adder shows above any content on the
+      // page
+      zIndex: 999,
+    });
 
-  self.element.querySelector(ANNOTATE_BTN_SELECTOR)
-    .addEventListener('click', handleCommand);
-  self.element.querySelector(HIGHLIGHT_BTN_SELECTOR)
-    .addEventListener('click', handleCommand);
-//  self.element.querySelector(OTHER_BTN_SELECTOR)
-//    .addEventListener('click', handleCommand);
+    // The adder is hidden using the `visibility` property rather than `display`
+    // so that we can compute its size in order to position it before display.
+    self.element.style.visibility = 'hidden';
+
+    //var view = self.element.ownerDocument.defaultView;
+    self.view = self.element.ownerDocument.defaultView;
+    self.enterTimeout = undefined;
+    // var enterTimeout;
+
+    self.element.querySelector(ANNOTATE_BTN_SELECTOR)
+      .addEventListener('click', handleCommand);
+    self.element.querySelector(HIGHLIGHT_BTN_SELECTOR)
+      .addEventListener('click', handleCommand);
+    self.element.querySelectorAll(OTHER_BTN_SELECTOR).forEach(function(bElement) {
+      bElement.addEventListener('click', handleCommand);
+    });
+  };
 
   function handleCommand(event) {
     event.preventDefault();
@@ -168,8 +188,8 @@ function Adder(container, options) {
       options.onAnnotate();
     } else if (this.classList.contains(HIGHLIGHT_BTN_CLASS)){
       options.onHighlight();
-    } else {
-      alert('other action 2');
+    } else if (this.dataset.category) {
+      options.onHighlightCategory(this.dataset.category);
     }
 
     self.hide();
@@ -185,7 +205,7 @@ function Adder(container, options) {
 
   /** Hide the adder */
   this.hide = function () {
-    clearTimeout(enterTimeout);
+    clearTimeout(self.enterTimeout);
     self.element.className = classnames({'annotator-adder': true});
     self.element.style.visibility = 'hidden';
   };
@@ -227,7 +247,7 @@ function Adder(container, options) {
     if (targetRect.top - height() < 0 &&
         arrowDirection === ARROW_POINTING_DOWN) {
       arrowDirection = ARROW_POINTING_UP;
-    } else if (targetRect.top + height() > view.innerHeight) {
+    } else if (targetRect.top + height() > self.view.innerHeight) {
       arrowDirection = ARROW_POINTING_DOWN;
     }
 
@@ -239,10 +259,10 @@ function Adder(container, options) {
 
     // Constrain the adder to the viewport.
     left = Math.max(left, 0);
-    left = Math.min(left, view.innerWidth - width());
+    left = Math.min(left, self.view.innerWidth - width());
 
     top = Math.max(top, 0);
-    top = Math.min(top, view.innerHeight - height());
+    top = Math.min(top, self.view.innerHeight - height());
 
     return {top, left, arrowDirection};
   };
@@ -286,11 +306,13 @@ function Adder(container, options) {
     });
     self.element.style.visibility = 'visible';
 
-    clearTimeout(enterTimeout);
-    enterTimeout = setTimeout(function () {
+    clearTimeout(self.enterTimeout);
+    self.enterTimeout = setTimeout(function () {
       self.element.className += ' is-active';
     }, 1);
   };
+
+  this.initElement(container);
 }
 
 module.exports = {

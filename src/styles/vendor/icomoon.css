@@ -1,7 +1,6 @@
 @font-face {
   font-family: 'h';
   src: url('../fonts/h.woff') format('woff');
-  /*src: url('../fonts/h2.woff') format('woff');*/
   font-weight: normal;
   font-style: normal;
 }
@@ -50,9 +49,6 @@
 }
 .h-icon-highlight:before {
   content: "\e904";
-}
-.h-icon-other:before {
-  content: "\e90e";
 }
 .h-icon-note:before {
   content: "\e905";
